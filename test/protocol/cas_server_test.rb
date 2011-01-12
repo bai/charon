@@ -3,7 +3,7 @@ require_relative "../test_helper"
 class CasServerTest < Test::Unit::TestCase
   module Rack
     module Test
-      DEFAULT_HOST = 'localhost'
+      DEFAULT_HOST = "localhost"
     end
   end
 
@@ -112,15 +112,15 @@ class CasServerTest < Test::Unit::TestCase
 
             # I'm going off rubycas-server here, and what I think is implied.
             should "generate a service ticket and redirect to the service" do
-              get "/login", {:service => @test_service_url}, "HTTP_COOKIE" => @cookie
+              get "/login", { :service => @test_service_url }, "HTTP_COOKIE" => @cookie
 
               assert last_response.redirect?
               assert_equal Addressable::URI.parse(@test_service_url).path,
                 Addressable::URI.parse(last_response.headers["Location"]).path
             end
 
-            should 'persist the ticket for retrieval later' do
-              get "/login", {:service => @test_service_url}, "HTTP_COOKIE" => @cookie
+            should "persist the ticket for retrieval later" do
+              get "/login", { :service => @test_service_url }, "HTTP_COOKIE" => @cookie
               # post "/login", @params
               ticket_number = last_response.inspect[/ST-[0-9]+/]
               st = ServiceTicket.find!(ticket_number, @redis)
@@ -132,7 +132,7 @@ class CasServerTest < Test::Unit::TestCase
           # Not specified, but good sanity check
           context "an invalid single sign-on session exists" do
             should "not generate a service ticket and rediect" do
-              get "/login", {:service => @test_service_url}, "HTTP_COOKIE" => "tgt=TGC-1234567"
+              get "/login", { :service => @test_service_url }, "HTTP_COOKIE" => "tgt=TGC-1234567"
 
               assert !last_response.headers["Location"]
             end
@@ -140,7 +140,7 @@ class CasServerTest < Test::Unit::TestCase
         end
 
         context "with a 'renew' parameter" do
-          setup { @params = { :renew => true }}
+          setup { @params = { :renew => true } }
           context "a single sign-on session already exists" do
             setup { sso_session_for("quentin") }
 
@@ -160,7 +160,7 @@ class CasServerTest < Test::Unit::TestCase
         end
 
         context "with a 'gateway' parameter" do
-          setup { @params = { :gateway => true }}
+          setup { @params = { :gateway => true } }
 
           # RECOMMENDED
           should "request credentials as though neither 'gateway' or 'service' were set" do
@@ -201,7 +201,7 @@ class CasServerTest < Test::Unit::TestCase
                   Addressable::URI.parse(last_response.headers["Location"]).path
               end
 
-              should 'persist the ticket for retrieval later' do
+              should "persist the ticket for retrieval later" do
                 get "/login", @params, "HTTP_COOKIE" => @cookie
                 # post "/login", @params
                 ticket_number = last_response.inspect[/ST-[0-9]+/]
@@ -210,8 +210,7 @@ class CasServerTest < Test::Unit::TestCase
                 assert st.valid_for_service?(@test_service_url)
               end
 
-              # MAY
-              # should "interpose an advisory page informing the client that a CAS authentication has taken place"
+              may "interpose an advisory page informing the client that a CAS authentication has taken place"
             end
           end
         end
@@ -297,20 +296,19 @@ class CasServerTest < Test::Unit::TestCase
 
       # 2.2.2
       context "parameters for username/password authentication" do
-
         must "require 'username', 'password', and 'lt' (login ticket) parameters" do
           post "/login"
 
           assert !last_response.ok?
 
-          post "/login", {:username => "test", :password => "password", :lt => "LT-FAKE"}
+          post "/login", { :username => "test", :password => "password", :lt => "LT-FAKE" }
 
           assert !last_response.ok?
 
-          post "/login", {:username => "test", :password => "password", :lt => @lt.ticket}
+          post "/login", { :username => "test", :password => "password", :lt => @lt.ticket }
           assert last_response.ok?
 
-          post "/login", {:username => "test", :password => "password", :lt => @lt.ticket}
+          post "/login", { :username => "test", :password => "password", :lt => @lt.ticket }
           assert !last_response.ok?
         end
       end
@@ -323,9 +321,9 @@ class CasServerTest < Test::Unit::TestCase
       # 2.2.4
       context "response" do
         context "successful login:" do
-          setup { @params = {:username => "test", :password => "password", :lt => @lt.ticket} }
+          setup { @params = { :username => "test", :password => "password", :lt => @lt.ticket } }
 
-          should 'set a ticket-granting cookie' do
+          should "set a ticket-granting cookie" do
             post "/login", @params
             assert_match(/tgt=TGC-/, last_response.headers.to_s)
           end
@@ -336,7 +334,7 @@ class CasServerTest < Test::Unit::TestCase
               @params[:service] = @service_param_url
             end
 
-            must 'redirect the client to the URL specified by the "service" parameter' do
+            must "redirect the client to the URL specified by the 'service' parameter" do
               post "/login", @params
               assert last_response.redirect?
               assert_match @service_param_url, last_response.headers["Location"]
@@ -353,7 +351,7 @@ class CasServerTest < Test::Unit::TestCase
               assert_equal 303, last_response.status
             end
 
-            must "include a valid service ticket, passed as the HTTP request parameter, \"ticket\" with request" do
+            must "include a valid service ticket, passed as the HTTP request parameter, 'ticket' with request" do
               post "/login", @params
               assert_match(/ticket/, last_response.inspect)
               assert_match(/ST-[0-9]+/, last_response.inspect)
@@ -369,7 +367,7 @@ class CasServerTest < Test::Unit::TestCase
               end
             end
 
-            should 'persist the ticket for retrieval later' do
+            should "persist the ticket for retrieval later" do
               post "/login", @params
               ticket_number = last_response.inspect[/ST-[0-9]+/]
               st = ServiceTicket.find!(ticket_number, @redis)
@@ -399,7 +397,7 @@ class CasServerTest < Test::Unit::TestCase
           # RECOMMENDED
           # Will implement with some kind of flash message
           should "display an error message describing why login failed" do
-            @params = {:username => "test", :password => "badpassword", :lt => @lt.ticket}
+            @params = { :username => "test", :password => "badpassword", :lt => @lt.ticket }
             post "/login", @params
             assert_match /Login was not successful/, last_response.body
           end
@@ -415,36 +413,36 @@ class CasServerTest < Test::Unit::TestCase
     context "/logout" do
       setup { sso_session_for("quentin") }
 
-      should 'destroy the ticket granting ticket' do
+      should "destroy the ticket granting ticket" do
         assert_not_nil TicketGrantingTicket.validate(@tgt.ticket, @redis)
-        get '/logout', '',"HTTP_COOKIE" => @cookie
+        get "/logout", "","HTTP_COOKIE" => @cookie
         assert_nil TicketGrantingTicket.validate(@tgt.ticket, @redis)
       end
 
       # not in protocol but inferred
-      should 'display a flash message to the user stating they are logged out' do
-        get '/logout', '',"HTTP_COOKIE" => @cookie
+      should "display a flash message to the user stating they are logged out" do
+        get "/logout", "","HTTP_COOKIE" => @cookie
         assert_match(/Logout Successful/, last_response.body)
       end
 
       # not in protocol but inferred
-      should 'show login page' do
-        get '/logout', '',"HTTP_COOKIE" => @cookie
+      should "show login page" do
+        get "/logout", "","HTTP_COOKIE" => @cookie
         assert_have_selector "input[name='username']"
         assert_have_selector "input[name='password']"
       end
 
       context "optional url parameter" do
         setup do
-          get '/logout', {:url => 'http://myreturn.app'},"HTTP_COOKIE" => @cookie
+          get "/logout", { :url => "http://myreturn.app" },"HTTP_COOKIE" => @cookie
         end
 
-        must 'display a page stating the user has been logged out' do
+        must "display a page stating the user has been logged out" do
           msg = "The application you just logged out of has provided a link it would like you to follow."
           assert_match msg, last_response.body
         end
 
-        should 'provide a link to the provided URL' do
+        should "provide a link to the provided URL" do
           msg = "Please <a href=\"http://myreturn.app\">click here</a> to access <a href=\"http://myreturn.app\">http://myreturn.app</a>"
           assert_match msg, last_response.body
         end
@@ -452,13 +450,11 @@ class CasServerTest < Test::Unit::TestCase
 
       # 2.3.3
       context "response" do
-        # MUST
-        should "display a page stating that user has been logged out"
+        must "display a page stating that user has been logged out"
 
         # 2.3.1
         context "with a 'url' parameter" do
-          # MAY
-          should "link back to 'url' on the logout page"
+          may "link back to 'url' on the logout page"
         end
       end
     end
@@ -486,10 +482,10 @@ class CasServerTest < Test::Unit::TestCase
           get "/serviceValidate"
           assert_invalid_request_xml_response(last_response)
 
-          get "/serviceValidate", {:service => @test_service_url}
+          get "/serviceValidate", { :service => @test_service_url }
           assert_invalid_request_xml_response(last_response)
 
-          get "/serviceValidate", {:ticket => 'ticket'}
+          get "/serviceValidate", { :ticket => 'ticket' }
           assert_invalid_request_xml_response(last_response)
         end
 
@@ -508,7 +504,7 @@ class CasServerTest < Test::Unit::TestCase
       context "response" do
         context "ticket validation success" do
           should "produce an XML service response" do
-            get "/serviceValidate", {:service => @test_service_url, :ticket => @st.ticket}
+            get "/serviceValidate", { :service => @test_service_url, :ticket => @st.ticket }
 
             assert_authentication_success_xml_response(last_response)
           end
@@ -516,7 +512,7 @@ class CasServerTest < Test::Unit::TestCase
 
         context "ticket validation failure" do
           should "produce an XML service response" do
-            get "/serviceValidate", {:service => @test_service_url, :ticket => "ST-FAKE"}
+            get "/serviceValidate", { :service => @test_service_url, :ticket => "ST-FAKE" }
 
             assert_authenticate_failure_xml_response(last_response)
           end
@@ -547,8 +543,7 @@ class CasServerTest < Test::Unit::TestCase
             assert_invalid_service_xml_response(last_response)
           end
 
-          # MUST
-          should "invalidate the ticket" do
+          must "invalidate the ticket" do
             assert !ServiceTicket.find!(@st.ticket, @redis)
           end
         end
@@ -560,7 +555,7 @@ class CasServerTest < Test::Unit::TestCase
 
       # 2.5.4
       context "proxy callback" do
-        #TODO
+        # TODO
       end
 
       # 2.6
@@ -580,10 +575,10 @@ class CasServerTest < Test::Unit::TestCase
               get "/proxyValidate"
               assert_invalid_request_xml_response(last_response)
 
-              get "/proxyValidate", {:service => @test_service_url}
+              get "/proxyValidate", { :service => @test_service_url }
               assert_invalid_request_xml_response(last_response)
 
-              get "/proxyValidate", {:ticket => 'ticket'}
+              get "/proxyValidate", { :ticket => 'ticket' }
               assert_invalid_request_xml_response(last_response)
             end
 
@@ -602,14 +597,14 @@ class CasServerTest < Test::Unit::TestCase
           context "response" do
             context "ticket validation success" do
               should "produce an XML service response" do
-                get "/proxyValidate", {:service => @test_service_url, :ticket => @st.ticket}
+                get "/proxyValidate", { :service => @test_service_url, :ticket => @st.ticket }
                 assert_authentication_success_xml_response(last_response)
               end
             end
 
             context "ticket validation failure" do
               should "produce an XML service response" do
-                get "/proxyValidate", {:service => @test_service_url, :ticket => "ST-FAKE"}
+                get "/proxyValidate", { :service => @test_service_url, :ticket => "ST-FAKE" }
 
                 assert_authenticate_failure_xml_response(last_response)
               end
@@ -642,8 +637,7 @@ class CasServerTest < Test::Unit::TestCase
               assert_invalid_service_xml_response(last_response)
             end
 
-            # MUST
-            should "invalidate the ticket" do
+            must "invalidate the ticket" do
               assert !ServiceTicket.find!(@st.ticket, @redis)
             end
           end
@@ -676,8 +670,7 @@ class CasServerTest < Test::Unit::TestCase
           assert !@st.ticket.include?(@test_service_url)
         end
 
-        # MUST
-        should "be valid for only one attempt" do
+        must "be valid for only one attempt" do
           assert ServiceTicket.find!(@st.ticket, @redis)
 
           assert !ServiceTicket.find!(@st.ticket, @redis)
@@ -687,11 +680,9 @@ class CasServerTest < Test::Unit::TestCase
           assert @st.remaining_time(@redis) <= 300
         end
 
-        # MUST
-        # should "contain adequate secure random data so that a ticket is not guessable" Is this even testable?
+        must "contain adequate secure random data so that a ticket is not guessable" # Is this even testable?
 
-        # MUST
-        should "begin with the characters 'ST-'" do
+        must "begin with the characters 'ST-'" do
           assert_match(/^ST-/, @st.ticket)
         end
 
@@ -717,8 +708,7 @@ class CasServerTest < Test::Unit::TestCase
           assert !@pt.ticket.include?(@test_service_url)
         end
 
-        # MUST
-        should "be valid for only one attempt" do
+        must "be valid for only one attempt" do
           assert ProxyTicket.validate!(@pt.ticket, @redis)
 
           assert !ProxyTicket.validate!(@pt.ticket, @redis)
@@ -728,19 +718,17 @@ class CasServerTest < Test::Unit::TestCase
           assert @pt.remaining_time(@redis) <= 300
         end
 
-        # MUST
-        # should "contain adequate secure random data so that a ticket is not guessable" Is this even testable?
+        must "contain adequate secure random data so that a ticket is not guessable" # Is this even testable?
 
         should "begin with the characters 'PT-'" do
           assert_match(/^PT-/, @pt.ticket)
         end
 
-        # MUST
-        should "begin with the characters 'ST-' or 'PT-'" do
+        must "begin with the characters 'ST-' or 'PT-'" do
           assert_match(/^(ST|PT)-/, @pt.ticket)
         end
 
-        # Services must accept a minimum of 32 chars.  Recommended 256
+        # Services must accept a minimum of 32 chars. Recommended 256
       end
     end
 
@@ -748,18 +736,15 @@ class CasServerTest < Test::Unit::TestCase
     context "proxy-granting ticket" do
       # 3.3.1
       context "properties" do
-        # MAY
-        should "be able to be used by services to obtain multiple proxy tickets"
+        may "be able to be used by services to obtain multiple proxy tickets"
 
-        # MUST
-        should "expire with the client logs out of CAS"
+        must "expire with the client logs out of CAS"
 
-        # MUST
-        # should "contain adequate secure random data so that the ticket-granting cookie is not guessable in a reasonable period of time"
-        # MUST
-        should "begin with the characters 'PGT-'"
+        must "contain adequate secure random data so that the ticket-granting cookie is not guessable in a reasonable period of time"
 
-        # Services must accept a minimum of 64 chars.  Recommended 256
+        must "begin with the characters 'PGT-'"
+
+        # Services must accept a minimum of 64 chars. Recommended 256
       end
     end
 
@@ -772,8 +757,7 @@ class CasServerTest < Test::Unit::TestCase
 
       # 3.5.1
       context "properties" do
-        # MUST
-        # should "be probablistically unique"
+        must "be probablistically unique"
 
         must "be valid for only one attempt" do
           assert LoginTicket.validate!(@lt.ticket, @redis)
@@ -795,20 +779,17 @@ class CasServerTest < Test::Unit::TestCase
 
       # 3.6.1
       context "properties" do
-        # MUST
-        should "be set to expire at the end of the client's browser session" do
+        must "be set to expire at the end of the client's browser session" do
           cookie_args = @tgt.to_cookie("http://localhost", "/cas")
           assert_equal(nil, cookie_args[1][:expires])
         end
 
-        # MUST
-        should "have a cookie path set to be as restrictive as possible" do
+        must "have a cookie path set to be as restrictive as possible" do
           cookie_args = @tgt.to_cookie("http://localhost", "/cas")
           assert_equal("/cas", cookie_args[1][:path])
         end
 
-        # MUST
-        # should "contain adequate secure random data so that the ticket-granting cookie is not guessable in a reasonable period of time"
+        must "contain adequate secure random data so that the ticket-granting cookie is not guessable in a reasonable period of time"
 
         should "begin with the characters 'TGC-'" do
           assert_match(/^TGC-/, @tgt.ticket)
@@ -826,8 +807,7 @@ class CasServerTest < Test::Unit::TestCase
         ]
       end
 
-      # MUST
-      should "contain only characters from the set {A-Z, a-z, 0-9, and the hyphen character}" do
+      must "contain only characters from the set {A-Z, a-z, 0-9, and the hyphen character}" do
         @tickets.each do |t|
           assert_match(/^[A-Za-z0-9\-]+$/, t.ticket)
         end
