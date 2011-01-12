@@ -1,0 +1,56 @@
+<!--
+   The following is the schema for the Yale Central Authentication
+   Service (CAS) version 2.0 protocol response.  This covers the responses
+   for the following servlets:
+     /serviceValidate
+     /proxyValidate
+     /proxy
+   This specification is subject to change.
+   Author:  Drew Mazurek
+   Version: $Id: cas2.xsd,v 1.1 2005/02/14 16:19:06 dmazurek Exp $
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:cas="http://www.yale.edu/tp/cas"
+           targetNamespace="http://www.yale.edu/tp/cas"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+    <xs:element name="serviceResponse" type="cas:ServiceResponseType"/>
+    <xs:complexType name="ServiceResponseType">
+        <xs:choice>
+            <xs:element name="authenticationSuccess" type="cas:AuthenticationSuccessType"/>
+            <xs:element name="authenticationFailure" type="cas:AuthenticationFailureType"/>
+            <xs:element name="proxySuccess" type="cas:ProxySuccessType"/>
+            <xs:element name="proxyFailure" type="cas:ProxyFailureType"/>
+        </xs:choice>
+    </xs:complexType>
+    <xs:complexType name="AuthenticationSuccessType">
+        <xs:sequence>
+            <xs:element name="user" type="xs:string"/>
+            <xs:element name="proxyGrantingTicket" type="xs:string" minOccurs="0"/>
+            <xs:element name="proxies" type="cas:ProxiesType" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="ProxiesType">
+        <xs:sequence>
+            <xs:element name="proxy" type="xs:string" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="AuthenticationFailureType">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="code" type="xs:string" use="required"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+    <xs:complexType name="ProxySuccessType">
+        <xs:sequence>
+            <xs:element name="proxyTicket" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="ProxyFailureType">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="code" type="xs:string" use="required"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+</xs:schema>

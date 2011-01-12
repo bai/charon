@@ -1,0 +1,27 @@
+<% if @logout %>
+  <% settings.client_sites.each do |site_url| %>
+    <iframe src="<%= site_url %>/cas_logout" style="display:none"></iframe>
+  <% end %>
+<% end %>
+
+<% if flash.has?(:error) %>
+  <p><%= flash[:error]%></p>
+<% end %>
+<% if flash.has?(:notice) %>
+<p><%= flash[:notice]%></p>
+<% end %>
+
+<h2>Login</h2>
+
+<form action='/login' method='post' class ='form login'>
+  <label class="label right">Username</label>
+  <input id='username' name='username' type='text' class="text_field"/>
+  <label class="label right">Password</label>
+  <input id='password' name='password' type='password' class="text_field"/>
+  <input name='lt' type='hidden' value='<%= @login_ticket.ticket %>' />
+  <input name='warn' type='hidden' />
+  <% if @service_url %>
+    <input name='service' type='hidden' value='<%= @service_url %>' />
+  <% end %>
+  <input class="button" type="submit" value="Login">
+</form>
