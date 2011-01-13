@@ -11,17 +11,21 @@
 <p><%= flash[:notice]%></p>
 <% end %>
 
-<h2>Login</h2>
+<h1>Login</h1>
 
-<form action='/login' method='post' class ='form login'>
-  <label class="label right">Username</label>
-  <input id='username' name='username' type='text' class="text_field"/>
-  <label class="label right">Password</label>
-  <input id='password' name='password' type='password' class="text_field"/>
-  <input name='lt' type='hidden' value='<%= @login_ticket.ticket %>' />
-  <input name='warn' type='hidden' />
+<form action="/login" method="post" class="form login">
+  <div class="field">
+    <input id="username" name="username" type="text" placeholder="Username">
+  </div>
+  <div class="field">
+    <input id="password" name="password" type="password" placeholder="Password">
+  </div>
+  <input name="lt" type="hidden" value="<%= @login_ticket.ticket %>">
+  <input name="warn" type="hidden">
   <% if @service_url %>
-    <input name='service' type='hidden' value='<%= @service_url %>' />
+    <input name="service" type="hidden" value="<%= @service_url %>">
   <% end %>
-  <input class="button" type="submit" value="Login">
+  <div class="actions">
+    <input type="submit" value="Login">
+  </div>
 </form>

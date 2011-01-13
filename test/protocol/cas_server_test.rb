@@ -248,13 +248,13 @@ class CasServerTest < Test::Unit::TestCase
         context "the form" do
           must "be submitted through the HTTP POST method" do
             get "/login"
-            assert_match(/method='post'/, last_response.body)
+            assert_match(/method="post"/, last_response.body)
           end
 
 
           must "be submitted to /login" do
             get "/login"
-            assert_match(/action='\/login'/, last_response.body)
+            assert_match(/action="\/login"/, last_response.body)
           end
         end
       end
