@@ -422,7 +422,7 @@ class CasServerTest < Test::Unit::TestCase
       # not in protocol but inferred
       should "display a flash message to the user stating they are logged out" do
         get "/logout", "","HTTP_COOKIE" => @cookie
-        assert_match(/Logout Successful/, last_response.body)
+        assert_match(/Logout successful/, last_response.body)
       end
 
       # not in protocol but inferred
