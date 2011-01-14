@@ -5,10 +5,10 @@
 <% end %>
 
 <% if flash.has?(:error) %>
-  <p><%= flash[:error]%></p>
+  <div class="flash error"><p><%= flash[:error]%></p></div>
 <% end %>
 <% if flash.has?(:notice) %>
-<p><%= flash[:notice]%></p>
+  <div class="flash notice"><p><%= flash[:notice]%></p></div>
 <% end %>
 
 <h1>Login</h1>

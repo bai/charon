@@ -65,6 +65,13 @@ a:hover { color: #036; }
 
 h1 { font-size:18px; margin-bottom:10px; }
 
+/*# Flash messages ================================================================================================= */
+.flash { margin-bottom:10px; padding:5px 10px; color:#FFF; }
+.flash.notice { background:#7DC2EE; }
+.flash.success { background:#2EAD7F; }
+.flash.warning { background:#FFA34A; }
+.flash.error { background:#FF5351; }
+
 /*# Forms ========================================================================================================== */
 form .field { margin-bottom:4px; }
 form .actions { text-align:right; }
