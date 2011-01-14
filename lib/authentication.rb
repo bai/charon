@@ -144,7 +144,7 @@ module Authentication
         @sso_session.destroy!(settings.redis)
         response.delete_cookie(*sso_session.to_cookie(request.host))
         warden.logout(:cas)
-        flash.now[:notice] = "Logout Successful."
+        flash.now[:notice] = "Logout successful."
         if url
           msg = "  The application you just logged out of has provided a link it would like you to follow."
           msg += "Please <a href=\"#{url}\">click here</a> to access <a href=\"#{url}\">#{url}</a>"
