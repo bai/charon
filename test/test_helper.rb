@@ -1,8 +1,8 @@
 $:.unshift(File.dirname(__FILE__), "..", "lib")
 
-require 'test/unit'
-require 'rubygems'
-require 'bundler'
+require "test/unit"
+require "rubygems"
+require "bundler"
 Bundler.require :test, :default
 
 Webrat.configure do |config|
@@ -20,7 +20,7 @@ class Authentication::Server
   set :environment, :test
 
   configure :test do
-    set :redis, Proc.new { Redis.new() }
+    set :redis, Proc.new { Redis.new }
   end
 end
 
