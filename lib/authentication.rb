@@ -1,6 +1,6 @@
 require "addressable/uri"
 
-require "models/base"
+require "models/ticket"
 require "models/login_ticket"
 require "models/proxy_ticket"
 require "models/service_ticket"

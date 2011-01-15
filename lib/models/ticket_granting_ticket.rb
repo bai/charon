@@ -1,4 +1,4 @@
-class TicketGrantingTicket < Base
+class TicketGrantingTicket < Ticket
   class << self
     def validate(ticket, store)
       if ticket && username = store[ticket]

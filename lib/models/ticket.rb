@@ -1,4 +1,4 @@
-class Base
+class Ticket
   private
     def random_string(max_length = 29)
       rg =  Crypt::ISAAC.new
