@@ -1,0 +1,8 @@
+ru:
+  logged_in_successfully: "Вы успешно вошли."
+  logged_out_successfully: "Вы успешно вышли."
+  username: "Логин"
+  password: "Пароль"
+  login_button: "Войти"
+  login_header: "Вход"
+  page_title: "Вход"

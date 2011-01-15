@@ -1,0 +1,8 @@
+en:
+  logged_in_successfully: "You have successfully logged in."
+  logged_out_successfully: "You have successfully logged out."
+  username: "Login"
+  password: "Password"
+  login_button: "Login"
+  login_header: "Login"
+  page_title: "Authentication"

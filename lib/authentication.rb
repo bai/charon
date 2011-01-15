@@ -8,15 +8,36 @@ require "models/ticket_granting_ticket"
 require "strategies/base"
 require "strategies/simple"
 
+module Sinatra
+  module I18n
+    module Helpers
+      def t(*args)
+        ::I18n::t(*args)
+      end
+    end
+
+    def self.registered(app)
+      app.helpers I18n::Helpers
+
+      Dir["#{app.root}/locales/*.yml"].each do |f|
+        ::I18n.backend.load_translations File.expand_path(f, app.root + "/locales")
+      end
+    end
+  end
+end
+
 module Authentication
   class Server < Sinatra::Base
     set :redis, Proc.new { Redis.new } unless settings.respond_to?(:redis)
     set :client_sites, [ "http://localhost:3001", "http://localhost:3002" ] unless settings.respond_to?(:client_sites)
+    set :locales, %w(en ru)
 
     set :root, File.dirname(__FILE__)
     set :public, File.join(root, "/../public")
 
     set :warden_strategies, [ :simple ] unless settings.respond_to?(:warden_strategies)
+
+    register Sinatra::I18n
 
     use Rack::Session::Cookie
     use Rack::Flash, :accessorize => [ :notice, :error ]
@@ -32,6 +53,10 @@ module Authentication
 
     configure :development do
       set :dump_errors
+    end
+
+    before do
+      I18n.locale = determine_locale
     end
 
     get "/" do
@@ -218,6 +243,34 @@ module Authentication
         result = xml.to_xml
         result = result.gsub(/serviceResponse/, "cas:serviceResponse")
         result
+      end
+
+      def determine_locale
+        language = case
+          when params[:l] && !params[:l].empty?
+            params[:l]
+          when request.env["HTTP_ACCEPT_LANGUAGE"] && !request.env["HTTP_ACCEPT_LANGUAGE"].empty?
+            request.env["HTTP_ACCEPT_LANGUAGE"]
+          when request.env["HTTP_USER_AGENT"] && !request.env["HTTP_USER_AGENT"].empty? && request.env["HTTP_USER_AGENT"] =~ /[^a-z]([a-z]{2}(-[a-z]{2})?)[^a-z]/i
+            $~[1]
+          else
+            "en"
+        end.gsub("_", "-")
+
+        # TODO: Need to confirm that this method of splitting the accepted language string is correct.
+        if language =~ /[,;\|]/
+          languages = language.split(/[,;\|]/)
+        else
+          languages = [ language ]
+        end
+
+        # Try to pick a locale exactly matching the desired identifier, otherwise fall back to locale without region
+        # (i.e. given "en-US; de-DE", we would first look for "en-US", then "en", then "de-DE", then "de").
+        #
+        # TODO: This method of selecting the desired language might not be standards-compliant. For example,
+        # http://www.w3.org/TR/ltli/ suggests that de-de and de-*-DE might be acceptable identifiers for selecting
+        # various wildcards. The algorithm below does not currently support anything like this.
+        settings.locales.find { |a| a =~ Regexp.new("\\A#{languages.join('|')}\\Z", "i") || a =~ Regexp.new("#{languages.join('|')}-\w*", "i") } || "en"
       end
   end
 end

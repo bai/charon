@@ -1,5 +1,6 @@
 source "http://rubygems.org"
 
+gem "i18n"
 gem "sinatra"
 gem "redis"
 gem "addressable"
