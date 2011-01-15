@@ -52,7 +52,6 @@ class CasServerTest < Test::Unit::TestCase
 
     assert !xml.xpath("//cas:authenticationFailure").empty?
     assert_equal("INVALID_TICKET", xml.xpath("//cas:authenticationFailure/@code")[0].content)
-
   end
 
   def assert_authenticate_failure_xml_response(last_response)
@@ -100,7 +99,6 @@ class CasServerTest < Test::Unit::TestCase
 
         context "with a 'service' parameter" do
           should "be url-encoded" do
-
             get "/login?service=#{URI.encode(@test_service_url)}"
             assert last_response.ok?
 
@@ -182,7 +180,6 @@ class CasServerTest < Test::Unit::TestCase
               assert_have_no_selector "input[name='lt']"
             end
 
-
             must "redirect the client to the service URL without a ticket" do
               get "/login", @params
 
@@ -191,7 +188,6 @@ class CasServerTest < Test::Unit::TestCase
 
             context "a single sign-on session already exists" do
               setup { sso_session_for("quentin") }
-
 
               may "redirect the client to the service URL, appending a valid service ticket" do
                 get "/login", @params, "HTTP_COOKIE" => @cookie
@@ -218,7 +214,6 @@ class CasServerTest < Test::Unit::TestCase
 
       # 2.1.3
       context "response for username/password authentication" do
-
         must "include a form with the parameters, 'username', 'password', and 'lt'" do
           get "/login"
 
@@ -236,7 +231,6 @@ class CasServerTest < Test::Unit::TestCase
         end
 
         context "with a 'service' parameter" do
-
           must "include the parameter 'service' in the form" do
             get "/login?service=#{URI.encode(@test_service_url)}"
 
@@ -282,7 +276,7 @@ class CasServerTest < Test::Unit::TestCase
         @lt.save!(@redis)
       end
 
-      #2.2.1
+      # 2.2.1
       # Tests in 2.2.4
       context "parameters common to all types of authentication" do
         context "with a 'service' parameter" do
@@ -469,10 +463,12 @@ class CasServerTest < Test::Unit::TestCase
 
         @xsd = Nokogiri::XML::Schema(File.new(File.dirname(__FILE__) + "/cas.xsd"))
       end
+
       must "issue proxy granting tickets when requested."
 
       context "if it receives a proxy ticket" do
         must "not return a successful validation if it receives a proxy ticket"
+
         should "have ane error message that explains in the xml that validation failed because a proxy ticket was passed"
       end
 
@@ -561,7 +557,6 @@ class CasServerTest < Test::Unit::TestCase
       # 2.6
       context "/proxyValidate" do
         context "performing the same validation tasks as /serviceValidate" do
-
           setup do
             @st = ServiceTicket.new(@test_service_url, "quentin")
             @st.save!(@redis)
@@ -605,7 +600,6 @@ class CasServerTest < Test::Unit::TestCase
             context "ticket validation failure" do
               should "produce an XML service response" do
                 get "/proxyValidate", { :service => @test_service_url, :ticket => "ST-FAKE" }
-
                 assert_authenticate_failure_xml_response(last_response)
               end
             end
@@ -617,7 +611,6 @@ class CasServerTest < Test::Unit::TestCase
           context "not all of the required request parameters present" do
             should "respond with INVALID_REQUEST" do
               get "/proxyValidate"
-
               assert_invalid_request_xml_response(last_response)
             end
           end
@@ -625,15 +618,14 @@ class CasServerTest < Test::Unit::TestCase
           context "ticket provided was not valid or the ticket did not come from an intial login and 'renew' was set" do
             should "respond with INVALID_TICKET" do
               get "/proxyValidate", :service => @test_service_url, :ticket => "ST-FAKE"
-
               assert_invalid_ticket_xml_response(last_response)
             end
           end
 
           context "the ticket provided was valid, but the service specified did not match the service associated with the ticket" do
             setup { get "/proxyValidate", :service => "http://example.com", :ticket => @st.ticket }
-            should "respond with INVALID_SERVICE" do
 
+            should "respond with INVALID_SERVICE" do
               assert_invalid_service_xml_response(last_response)
             end
 
@@ -648,6 +640,7 @@ class CasServerTest < Test::Unit::TestCase
         end
 
         must "validate proxy tickets"
+
         must "be capable of validating both service tickets and proxy tickets."
       end
     end
