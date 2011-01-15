@@ -10,7 +10,7 @@ class ServiceTicketTest < Test::Unit::TestCase
       @st.save!(@redis)
     end
 
-    context 'find!' do
+    context "find!" do
       should "be able to retrieve the username" do
         assert_equal("quentin", @st.username)
         assert_equal("http://localhost", @st.service_url)
@@ -26,15 +26,15 @@ class ServiceTicketTest < Test::Unit::TestCase
       end
     end
 
-    context 'valid for service?' do
+    context "valid for service?" do
       setup do
         @retrieved_ticket = ServiceTicket.find!(@st.ticket, @redis)
       end
-      should 'be true if url passed in is the same as in the the store' do
+      should "be true if url passed in is the same as in the the store" do
         assert @retrieved_ticket.valid_for_service?("http://localhost")
       end
 
-      should 'be false if url passed in is not the same as in the store' do
+      should "be false if url passed in is not the same as in the store" do
         assert_false @retrieved_ticket.valid_for_service?("http://wronghost")
       end
     end

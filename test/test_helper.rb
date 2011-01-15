@@ -42,7 +42,7 @@ Warden::Strategies.add(:simple_strategy) do
 end
 
 module Test::Unit::Assertions
-  def assert_false(object, message="")
+  def assert_false(object, message = "")
     assert_equal(false, object, message)
   end
 end

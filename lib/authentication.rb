@@ -10,15 +10,15 @@ require "strategies/simple"
 module Authentication
   class Server < Sinatra::Base
     set :redis, Proc.new { Redis.new } unless settings.respond_to?(:redis)
-    set :client_sites, [ "http://localhost:3001", 'http://localhost:3002'] unless settings.respond_to?(:client_sites)
+    set :client_sites, [ "http://localhost:3001", "http://localhost:3002" ] unless settings.respond_to?(:client_sites)
 
     set :root, File.dirname(__FILE__)
     set :public, File.join(root, "/../public")
 
-    set :warden_strategies, [:simple] unless settings.respond_to?(:warden_strategies)
+    set :warden_strategies, [ :simple ] unless settings.respond_to?(:warden_strategies)
 
     use Rack::Session::Cookie
-    use Rack::Flash, :accessorize => [:notice, :error]
+    use Rack::Flash, :accessorize => [ :notice, :error ]
     use Warden::Manager do |manager|
       manager.failure_app = self
       manager.default_scope = :cas
@@ -39,8 +39,8 @@ module Authentication
 
     get "/login" do
       @service_url = Addressable::URI.parse(params[:service])
-      @renew = [true, "true", "1", 1].include?(params[:renew])
-      @gateway = [true, "true", "1", 1].include?(params[:gateway])
+      @renew = [ true, "true", "1", 1 ].include?(params[:renew])
+      @gateway = [ true, "true", "1", 1 ].include?(params[:gateway])
 
       if @renew
         @login_ticket = LoginTicket.create!(settings.redis)
@@ -52,7 +52,7 @@ module Authentication
             st.save!(settings.redis)
             redirect_url = @service_url.clone
             if @service_url.query_values.nil?
-              redirect_url.query_values = @service_url.query_values = {:ticket => st.ticket}
+              redirect_url.query_values = @service_url.query_values = { :ticket => st.ticket }
             else
               redirect_url.query_values = @service_url.query_values.merge(:ticket => st.ticket)
             end
@@ -71,7 +71,7 @@ module Authentication
             st.save!(settings.redis)
             redirect_url = @service_url.clone
             if @service_url.query_values.nil?
-              redirect_url.query_values = @service_url.query_values = {:ticket => st.ticket}
+              redirect_url.query_values = @service_url.query_values = { :ticket => st.ticket }
             else
               redirect_url.query_values = @service_url.query_values.merge(:ticket => st.ticket)
             end
@@ -92,7 +92,7 @@ module Authentication
 
       service_url = params[:service]
 
-      warn = [true, "true", "1", 1].include? params[:warn]
+      warn = [ true, "true", "1", 1 ].include? params[:warn]
       # Spec is undefined about what to do without these params, so redirecting to credential requestor
       redirect "/login", 303 unless username && password && login_ticket
       # Failures will throw back to self, which we've registered with Warden to handle login failures
@@ -119,15 +119,15 @@ module Authentication
       # renew = params[:renew]
 
       xml = if service_url && ticket
-      if service_ticket
-        if service_ticket.valid_for_service?(service_url)
-          render_validation_success service_ticket.username
+        if service_ticket
+          if service_ticket.valid_for_service?(service_url)
+            render_validation_success service_ticket.username
+          else
+            render_validation_error(:invalid_service)
+          end
         else
-          render_validation_error(:invalid_service)
+          render_validation_error(:invalid_ticket, "ticket #{ticket} not recognized")
         end
-      else
-        render_validation_error(:invalid_ticket, "ticket #{ticket} not recognized")
-      end
       else
         render_validation_error(:invalid_request)
       end
