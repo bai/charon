@@ -216,31 +216,23 @@ module Authentication
       end
 
       def render_validation_error(code, message = nil)
-        xml = Nokogiri::XML::Builder.new do |xml|
+        Nokogiri::XML::Builder.new do |xml|
           xml.serviceResponse("xmlns:cas" => "http://www.yale.edu/tp/cas") {
-            xml["cas"].authenticationFailure(message, :code => code.to_s.upcase){
-            }
+            xml.parent.namespace = xml.parent.namespace_definitions.first
+            xml["cas"].authenticationFailure(message, :code => code.to_s.upcase)
           }
-        end
-        namespace_hack(xml)
+        end.to_xml
       end
 
       def render_validation_success(username)
-        xml = Nokogiri::XML::Builder.new do |xml|
+        Nokogiri::XML::Builder.new do |xml|
           xml.serviceResponse("xmlns:cas" => "http://www.yale.edu/tp/cas") {
+            xml.parent.namespace = xml.parent.namespace_definitions.first
             xml["cas"].authenticationSuccess {
               xml["cas"].user username
             }
           }
-        end
-        namespace_hack(xml)
-      end
-
-      # TODO: Nokogiri will not allow a namespace to be used before it's declared, why this is I don't know.
-      def namespace_hack(xml)
-        result = xml.to_xml
-        result = result.gsub(/serviceResponse/, "cas:serviceResponse")
-        result
+        end.to_xml
       end
 
       def determine_locale

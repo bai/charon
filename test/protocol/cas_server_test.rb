@@ -72,7 +72,7 @@ class CasServerTest < Test::Unit::TestCase
     assert_equal("INVALID_SERVICE", xml.xpath("//cas:authenticationFailure/@code")[0].content)
   end
 
-  context "A CAS server" do
+  context "An authentication server" do
     setup do
       @test_service_url = "http://example.com?page=foo bar"
       @redis = Redis.new
