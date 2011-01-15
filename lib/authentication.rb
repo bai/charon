@@ -5,6 +5,7 @@ require "models/login_ticket"
 require "models/proxy_ticket"
 require "models/service_ticket"
 require "models/ticket_granting_ticket"
+require "models/proxy_granting_ticket"
 require "strategies/base"
 require "strategies/simple"
 
