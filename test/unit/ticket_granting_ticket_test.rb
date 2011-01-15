@@ -1,9 +1,3 @@
-unless Kernel.method_defined?(:require_relative)
-  require 'rubygems'
-  require 'bundler'
-  Bundler.require :test, :default
-end
-
 require_relative '../test_helper'
 
 # Most tests are in test/protocol. Tests here are outside of the protocol, but are necessary anyway.
