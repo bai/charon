@@ -578,7 +578,7 @@ class CasServerTest < Test::Unit::TestCase
               get "/proxyValidate", { :service => @test_service_url }
               assert_invalid_request_xml_response(last_response)
 
-              get "/proxyValidate", { :ticket => 'ticket' }
+              get "/proxyValidate", { :ticket => "ticket" }
               assert_invalid_request_xml_response(last_response)
             end
 

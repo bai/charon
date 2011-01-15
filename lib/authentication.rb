@@ -97,7 +97,7 @@ module Authentication
       # Spec is undefined about what to do without these params, so redirecting to credential requestor
       redirect "/login", 303 unless username && password && login_ticket
       # Failures will throw back to self, which we've registered with Warden to handle login failures
-      warden.authenticate!(:scope => :cas, :action => 'unauthenticated')
+      warden.authenticate!(:scope => :cas, :action => "unauthenticated")
 
       tgt = TicketGrantingTicket.new(username)
       tgt.save!(settings.redis)
@@ -138,7 +138,7 @@ module Authentication
     end
 
 
-    get '/logout' do
+    get "/logout" do
       url = params[:url]
 
       if sso_session
@@ -195,7 +195,7 @@ module Authentication
       def render_validation_error(code, message = nil)
         xml = Nokogiri::XML::Builder.new do |xml|
           xml.serviceResponse("xmlns:cas" => "http://www.yale.edu/tp/cas") {
-            xml['cas'].authenticationFailure(message, :code => code.to_s.upcase){
+            xml["cas"].authenticationFailure(message, :code => code.to_s.upcase){
             }
           }
         end
@@ -205,8 +205,8 @@ module Authentication
       def render_validation_success(username)
         xml = Nokogiri::XML::Builder.new do |xml|
           xml.serviceResponse("xmlns:cas" => "http://www.yale.edu/tp/cas") {
-            xml['cas'].authenticationSuccess {
-              xml['cas'].user username
+            xml["cas"].authenticationSuccess {
+              xml["cas"].user username
             }
           }
         end
@@ -216,7 +216,7 @@ module Authentication
       # TODO: Nokogiri will not allow a namespace to be used before it's declared, why this is I don't know.
       def namespace_hack(xml)
         result = xml.to_xml
-        result = result.gsub(/serviceResponse/, 'cas:serviceResponse')
+        result = result.gsub(/serviceResponse/, "cas:serviceResponse")
         result
       end
   end
