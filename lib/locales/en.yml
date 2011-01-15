@@ -1,6 +1,7 @@
 en:
-  logged_in_successfully: "You have successfully logged in."
-  logged_out_successfully: "You have successfully logged out."
+  login_successful: "You have successfully logged in."
+  logout_successful: "You have successfully logged out."
+  login_failed: "Login was not successful."
   username: "Login"
   password: "Password"
   login_button: "Login"

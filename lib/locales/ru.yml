@@ -1,6 +1,7 @@
 ru:
-  logged_in_successfully: "Вы успешно вошли."
-  logged_out_successfully: "Вы успешно вышли."
+  login_successful: "Вы успешно вошли."
+  logout_successful: "Вы успешно вышли."
+  login_failed: "При входе произошла ошибка."
   username: "Логин"
   password: "Пароль"
   login_button: "Войти"

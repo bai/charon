@@ -169,7 +169,7 @@ module Authentication
         @sso_session.destroy!(settings.redis)
         response.delete_cookie(*sso_session.to_cookie(request.host))
         warden.logout(:cas)
-        flash.now[:notice] = "Logout successful."
+        flash.now[:notice] = t("logout_successful")
         if url
           msg = "  The application you just logged out of has provided a link it would like you to follow."
           msg += "Please <a href=\"#{url}\">click here</a> to access <a href=\"#{url}\">#{url}</a>"
@@ -182,7 +182,7 @@ module Authentication
 
     post "/unauthenticated" do
       @login_ticket = LoginTicket.create!(settings.redis)
-      flash[:error] = "Login was not successful"
+      flash[:error] = t("login_failed")
       render_login
     end
 
