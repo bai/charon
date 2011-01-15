@@ -15,7 +15,7 @@ class TicketGrantingTicket < Base
   end
 
   def ticket
-    @ticket ||= "TGC-#{rand(100000000000000000)}".to_s
+    @ticket ||= "TGC-#{random_string}".to_s
   end
 
   def destroy!(store)

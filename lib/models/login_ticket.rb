@@ -19,7 +19,7 @@ class LoginTicket < Base
   end
 
   def ticket
-    @ticket ||= "LT-#{rand(100000000000000000)}".to_s
+    @ticket ||= "LT-#{random_string}".to_s
   end
 
   def remaining_time(store)

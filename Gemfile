@@ -7,6 +7,7 @@ gem "nokogiri"
 gem "rack"
 gem "rack-flash"
 gem "warden"
+gem "crypt-isaac", :git => "git://github.com/bai/crypt-isaac.git"
 
 group :test, :development do
   gem "shotgun"

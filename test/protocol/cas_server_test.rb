@@ -122,7 +122,7 @@ class CasServerTest < Test::Unit::TestCase
             should "persist the ticket for retrieval later" do
               get "/login", { :service => @test_service_url }, "HTTP_COOKIE" => @cookie
               # post "/login", @params
-              ticket_number = last_response.inspect[/ST-[0-9]+/]
+              ticket_number = last_response.inspect[/ST-[A-Za-z0-9]+/]
               st = ServiceTicket.find!(ticket_number, @redis)
               assert_not_nil st
               assert st.valid_for_service?(@test_service_url)
@@ -204,7 +204,7 @@ class CasServerTest < Test::Unit::TestCase
               should "persist the ticket for retrieval later" do
                 get "/login", @params, "HTTP_COOKIE" => @cookie
                 # post "/login", @params
-                ticket_number = last_response.inspect[/ST-[0-9]+/]
+                ticket_number = last_response.inspect[/ST-[A-Za-z0-9]+/]
                 st = ServiceTicket.find!(ticket_number, @redis)
                 assert_not_nil st
                 assert st.valid_for_service?(@test_service_url)
@@ -369,7 +369,7 @@ class CasServerTest < Test::Unit::TestCase
 
             should "persist the ticket for retrieval later" do
               post "/login", @params
-              ticket_number = last_response.inspect[/ST-[0-9]+/]
+              ticket_number = last_response.inspect[/ST-[A-Za-z0-9]+/]
               st = ServiceTicket.find!(ticket_number, @redis)
               assert_not_nil st
               assert st.valid_for_service?(@service_param_url)
