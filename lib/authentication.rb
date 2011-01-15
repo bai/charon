@@ -29,7 +29,6 @@ end
 module Authentication
   class Server < Sinatra::Base
     set :redis, Proc.new { Redis.new } unless settings.respond_to?(:redis)
-    set :client_sites, [ "http://localhost:3001", "http://localhost:3002" ] unless settings.respond_to?(:client_sites)
     set :locales, %w(en ru)
 
     set :root, File.dirname(__FILE__)
@@ -162,7 +161,7 @@ module Authentication
       xml
     end
 
-
+    # TODO: Think about more sane single sign-out solution than @logout = true.
     get "/logout" do
       url = params[:url]
 
@@ -178,7 +177,6 @@ module Authentication
         end
       end
       @login_ticket = LoginTicket.create!(settings.redis)
-      @logout = true
       render_login
     end
 

@@ -21,7 +21,6 @@ class Authentication::Server
 
   configure :test do
     set :redis, Proc.new { Redis.new() }
-    set :client_sites, [ "http://example.org", "http://example.com" ]
   end
 end
 

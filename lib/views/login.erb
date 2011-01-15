@@ -1,9 +1,3 @@
-<% if @logout %>
-  <% settings.client_sites.each do |site_url| %>
-    <iframe src="<%= site_url %>/cas_logout" style="display:none"></iframe>
-  <% end %>
-<% end %>
-
 <% if flash.has?(:error) %>
   <div class="flash error"><p><%= flash[:error]%></p></div>
 <% end %>
