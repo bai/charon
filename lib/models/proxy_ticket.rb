@@ -1,4 +1,4 @@
-class ProxyTicket
+class ProxyTicket < Base
   class << self
     def validate!(ticket, store)
       if service_url = store[ticket]

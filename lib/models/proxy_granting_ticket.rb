@@ -1,4 +1,4 @@
-class ProxyGrantingTicket
+class ProxyGrantingTicket < Base
   class << self
     def validate!(ticket, store)
       if service_name = store[ticket]

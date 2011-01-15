@@ -1,4 +1,4 @@
-class ServiceTicket
+class ServiceTicket < Base
   class << self
     def find!(ticket, store)
       username = store.hget(ticket, :username)

@@ -1,4 +1,4 @@
-class LoginTicket
+class LoginTicket < Base
   class << self
     def validate!(ticket, store)
       if store.exists ticket
