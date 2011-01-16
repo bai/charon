@@ -75,6 +75,7 @@ class ServerTest < Test::Unit::TestCase
     setup do
       @test_service_url = "http://example.com?page=foo bar"
       @redis = Redis.new
+      @parser = URI::Parser.new
     end
 
     # 2.1
@@ -99,7 +100,7 @@ class ServerTest < Test::Unit::TestCase
 
         context "with a 'service' parameter" do
           should "be url-encoded" do
-            get "/login?service=#{URI.encode(@test_service_url)}"
+            get "/login?service=#{@parser.escape(@test_service_url)}"
             assert last_response.ok?
 
             assert_raise(URI::InvalidURIError) { get "/login?service=#{@test_service_url}" }
@@ -231,7 +232,7 @@ class ServerTest < Test::Unit::TestCase
 
         context "with a 'service' parameter" do
           must "include the parameter 'service' in the form" do
-            get "/login?service=#{URI.encode(@test_service_url)}"
+            get "/login?service=#{@parser.escape(@test_service_url)}"
 
             assert_have_selector "input[name='service']"
             assert field_named("service").value == @test_service_url
@@ -323,8 +324,7 @@ class ServerTest < Test::Unit::TestCase
 
           context "with a 'service' parameter" do
             setup do
-              parser = URI::Parser.new
-              @service_param_url = parser.escape(@test_service_url)
+              @service_param_url = @parser.escape(@test_service_url)
               @params[:service] = @service_param_url
             end
 
