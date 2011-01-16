@@ -34,11 +34,9 @@ module Authentication
 
     set :redis, Proc.new { Redis.new }
     set :locales, %w(en ru)
-
     set :root, File.join(File.dirname(__FILE__), "/..")
     set :public, File.join(root, "/public")
-
-    set :warden_strategies, [ :simple ] unless settings.respond_to?(:warden_strategies)
+    set :warden_strategies, [ :simple ]
 
     register Sinatra::I18n
 
