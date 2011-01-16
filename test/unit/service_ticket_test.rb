@@ -1,4 +1,4 @@
-require_relative "../test_helper"
+require "test_helper"
 
 # Most tests are in test/protocol. Tests here are outside of the protocol, but are necessary anyway.
 class ServiceTicketTest < Test::Unit::TestCase

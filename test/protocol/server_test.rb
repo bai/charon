@@ -1,6 +1,6 @@
-require_relative "../test_helper"
+require "test_helper"
 
-class CasServerTest < Test::Unit::TestCase
+class ServerTest < Test::Unit::TestCase
   module Rack
     module Test
       DEFAULT_HOST = "localhost"
