@@ -32,7 +32,7 @@ module Authentication
   class Server < Sinatra::Base
     include Authentication::Helpers
 
-    set :redis, Proc.new { Redis.new } unless settings.respond_to?(:redis)
+    set :redis, Proc.new { Redis.new }
     set :locales, %w(en ru)
 
     set :root, File.join(File.dirname(__FILE__), "/..")
