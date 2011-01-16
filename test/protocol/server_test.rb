@@ -461,7 +461,7 @@ class CasServerTest < Test::Unit::TestCase
         @st = ServiceTicket.new(@test_service_url, "quentin")
         @st.save!(@redis)
 
-        @xsd = Nokogiri::XML::Schema(File.new(File.dirname(__FILE__) + "/cas.xsd"))
+        @xsd = Nokogiri::XML::Schema(File.new(File.dirname(__FILE__) + "/schemas/cas2.xsd"))
       end
 
       must "issue proxy granting tickets when requested."
@@ -561,7 +561,7 @@ class CasServerTest < Test::Unit::TestCase
             @st = ServiceTicket.new(@test_service_url, "quentin")
             @st.save!(@redis)
 
-            @xsd = Nokogiri::XML::Schema(File.new(File.dirname(__FILE__) + "/cas.xsd"))
+            @xsd = Nokogiri::XML::Schema(File.new(File.dirname(__FILE__) + "/schemas/cas2.xsd"))
           end
 
           # 2.5.1 for 2.6
