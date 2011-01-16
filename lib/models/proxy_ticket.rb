@@ -21,7 +21,7 @@ class ProxyTicket < Ticket
   end
 
   def ticket
-    @ticket ||= "PT-#{random_string}".to_s
+    @ticket ||= "PT-#{random_string(117)}".to_s
   end
 
   def remaining_time(store)

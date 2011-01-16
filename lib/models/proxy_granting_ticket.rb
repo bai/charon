@@ -16,7 +16,7 @@ class ProxyGrantingTicket < Ticket
   end
 
   def ticket
-    @ticket ||= "PGT-#{random_string}".to_s
+    @ticket ||= "PGT-#{random_string(117)}".to_s
   end
 
   def save!(store)

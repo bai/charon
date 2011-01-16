@@ -139,6 +139,7 @@ class ServerTest < Test::Unit::TestCase
 
         context "with a 'renew' parameter" do
           setup { @params = { :renew => true } }
+
           context "a single sign-on session already exists" do
             setup { sso_session_for("quentin") }
 
@@ -679,7 +680,9 @@ class ServerTest < Test::Unit::TestCase
           assert_match(/^ST-/, @st.ticket)
         end
 
-        # Services must accept a minimum of 32 chars.  Recommended 256
+        must "be at least 32 characters in length" do
+          assert @st.ticket.gsub(/^ST-/, "").length >= 32 # Services must accept a minimum of 32 chars. Recommended 256.
+        end
       end
     end
 
@@ -721,12 +724,19 @@ class ServerTest < Test::Unit::TestCase
           assert_match(/^(ST|PT)-/, @pt.ticket)
         end
 
-        # Services must accept a minimum of 32 chars. Recommended 256
+        must "be at least 32 characters in length" do
+          assert @pt.ticket.gsub(/^(ST|PT)-/, "").length >= 32 # Services must accept a minimum of 32 chars. Recommended 256.
+        end
       end
     end
 
     # 3.3
     context "proxy-granting ticket" do
+      setup do
+        @pgt = ProxyGrantingTicket.new(@test_service_url)
+        @pgt.save!(@redis)
+      end
+
       # 3.3.1
       context "properties" do
         may "be able to be used by services to obtain multiple proxy tickets"
@@ -737,7 +747,9 @@ class ServerTest < Test::Unit::TestCase
 
         must "begin with the characters 'PGT-'"
 
-        # Services must accept a minimum of 64 chars. Recommended 256
+        must "be at least 64 characters in length" do
+          assert @pgt.ticket.gsub(/^PGT-/, "").length >= 64 # Services must accept a minimum of 64 chars. Recommended 256.
+        end
       end
     end
 

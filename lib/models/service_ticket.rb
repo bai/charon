@@ -27,7 +27,7 @@ class ServiceTicket < Ticket
   end
 
   def ticket
-    @ticket ||= "ST-#{random_string}".to_s
+    @ticket ||= "ST-#{random_string(117)}".to_s
   end
 
   def remaining_time(store)
