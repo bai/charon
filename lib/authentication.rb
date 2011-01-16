@@ -1,5 +1,6 @@
 require "addressable/uri"
 
+require "helpers"
 require "models/ticket"
 require "models/login_ticket"
 require "models/proxy_ticket"
@@ -29,6 +30,8 @@ end
 
 module Authentication
   class Server < Sinatra::Base
+    include Authentication::Helpers
+
     set :redis, Proc.new { Redis.new } unless settings.respond_to?(:redis)
     set :locales, %w(en ru)
 
