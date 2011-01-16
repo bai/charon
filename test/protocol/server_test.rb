@@ -23,7 +23,7 @@ class ServerTest < Test::Unit::TestCase
 
   def assert_valid_xml(xml)
     assert @xsd.validate(xml)
-    # assert_match(/cas:serviceResponse/, xml.root.to_s)
+    assert_match(/cas:serviceResponse/, xml.root.to_s)
   end
 
   def assert_invalid_request_xml_response(last_response)
@@ -108,7 +108,6 @@ class ServerTest < Test::Unit::TestCase
           context "a single sign-on session already exists" do
             setup { sso_session_for("quentin") }
 
-            # I'm going off rubycas-server here, and what I think is implied.
             should "generate a service ticket and redirect to the service" do
               get "/login", { :service => @test_service_url }, "HTTP_COOKIE" => @cookie
 
@@ -206,7 +205,7 @@ class ServerTest < Test::Unit::TestCase
                 assert st.valid_for_service?(@test_service_url)
               end
 
-              may "interpose an advisory page informing the client that a CAS authentication has taken place"
+              may "interpose an advisory page informing the client that an authentication has taken place"
             end
           end
         end
@@ -324,7 +323,8 @@ class ServerTest < Test::Unit::TestCase
 
           context "with a 'service' parameter" do
             setup do
-              @service_param_url = URI.encode(@test_service_url)
+              parser = URI::Parser.new
+              @service_param_url = parser.escape(@test_service_url)
               @params[:service] = @service_param_url
             end
 
@@ -731,7 +731,7 @@ class ServerTest < Test::Unit::TestCase
       context "properties" do
         may "be able to be used by services to obtain multiple proxy tickets"
 
-        must "expire with the client logs out of CAS"
+        must "expire with the client logs out of the system"
 
         must "contain adequate secure random data so that the ticket-granting cookie is not guessable in a reasonable period of time"
 
