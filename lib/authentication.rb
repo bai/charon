@@ -35,8 +35,8 @@ module Authentication
     set :redis, Proc.new { Redis.new } unless settings.respond_to?(:redis)
     set :locales, %w(en ru)
 
-    set :root, File.dirname(__FILE__)
-    set :public, File.join(root, "/../public")
+    set :root, File.join(File.dirname(__FILE__), "/..")
+    set :public, File.join(root, "/public")
 
     set :warden_strategies, [ :simple ] unless settings.respond_to?(:warden_strategies)
 

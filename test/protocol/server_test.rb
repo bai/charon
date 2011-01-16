@@ -22,8 +22,8 @@ class CasServerTest < Test::Unit::TestCase
   end
 
   def assert_valid_xml(xml)
-    # assert @xsd.validate(xml)
-    assert_match(/cas:serviceResponse/, xml.root.to_s)
+    assert @xsd.validate(xml)
+    # assert_match(/cas:serviceResponse/, xml.root.to_s)
   end
 
   def assert_invalid_request_xml_response(last_response)
