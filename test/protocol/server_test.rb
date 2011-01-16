@@ -393,7 +393,7 @@ class ServerTest < Test::Unit::TestCase
           should "display an error message describing why login failed" do
             @params = { :username => "test", :password => "badpassword", :lt => @lt.ticket }
             post "/login", @params
-            assert_match /Login was not successful/, last_response.body
+            assert_match(/Login was not successful/, last_response.body)
           end
 
           # RECOMMENDED
