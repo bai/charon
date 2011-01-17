@@ -2,7 +2,7 @@ en:
   login_successful: "You have successfully logged in."
   logout_successful: "You have successfully logged out."
   login_failed: "Login was not successful."
-  username: "Login"
+  username: "Email"
   password: "Password"
   login_button: "Login"
   login_header: "Login"

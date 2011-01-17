@@ -2,7 +2,7 @@ ru:
   login_successful: "Вы успешно вошли."
   logout_successful: "Вы успешно вышли."
   login_failed: "При входе произошла ошибка."
-  username: "Логин"
+  username: "Email"
   password: "Пароль"
   login_button: "Войти"
   login_header: "Вход"
