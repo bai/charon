@@ -29,7 +29,6 @@ class ServerTest < Test::Unit::TestCase
   def assert_invalid_request_xml_response(last_response)
     assert_equal("application/xml;charset=utf-8", last_response.content_type)
     xml = Nokogiri::XML.parse(last_response.body)
-
     assert_valid_xml(xml)
 
     assert !xml.xpath("//cas:authenticationFailure", { "cas" => "http://www.yale.edu/tp/cas" }).empty?, "Expected authenticationFailure in #{xml}"
@@ -39,8 +38,7 @@ class ServerTest < Test::Unit::TestCase
   def assert_authentication_success_xml_response(last_response)
     assert_equal("application/xml;charset=utf-8", last_response.content_type)
     xml = Nokogiri::XML.parse(last_response.body)
-
-    assert @xsd.validate(xml)
+    assert_valid_xml(xml)
 
     assert !xml.xpath("//cas:authenticationSuccess", { "cas" => "http://www.yale.edu/tp/cas" }).empty?, "Expected authenticationSuccess in #{xml}"
     assert_equal("quentin", xml.xpath("//cas:user", { "cas" => "http://www.yale.edu/tp/cas" })[0].content)
@@ -49,8 +47,7 @@ class ServerTest < Test::Unit::TestCase
   def assert_invalid_ticket_xml_response(last_response)
     assert_equal("application/xml;charset=utf-8", last_response.content_type)
     xml = Nokogiri::XML.parse(last_response.body)
-
-    assert @xsd.validate(xml)
+    assert_valid_xml(xml)
 
     assert !xml.xpath("//cas:authenticationFailure", { "cas" => "http://www.yale.edu/tp/cas" }).empty?, "Expected authenticationFailure in #{xml}"
     assert_equal("INVALID_TICKET", xml.xpath("//cas:authenticationFailure/@code", { "cas" => "http://www.yale.edu/tp/cas" })[0].content)
@@ -59,7 +56,7 @@ class ServerTest < Test::Unit::TestCase
   def assert_authenticate_failure_xml_response(last_response)
     assert_equal("application/xml;charset=utf-8", last_response.content_type)
     xml = Nokogiri::XML.parse(last_response.body)
-    assert @xsd.validate(xml)
+    assert_valid_xml(xml)
 
     assert !xml.xpath("//cas:authenticationFailure", { "cas" => "http://www.yale.edu/tp/cas" }).empty?, "Expected authenticationFailure in #{xml}"
   end
@@ -67,7 +64,7 @@ class ServerTest < Test::Unit::TestCase
   def assert_invalid_service_xml_response(last_response)
     assert_equal("application/xml;charset=utf-8", last_response.content_type)
     xml = Nokogiri::XML.parse(last_response.body)
-    assert @xsd.validate(xml)
+    assert_valid_xml(xml)
 
     assert !xml.xpath("//cas:authenticationFailure", { "cas" => "http://www.yale.edu/tp/cas" }).empty?, "Expected authenticationFailure in #{xml}"
     assert_equal("INVALID_SERVICE", xml.xpath("//cas:authenticationFailure/@code", { "cas" => "http://www.yale.edu/tp/cas" })[0].content)
