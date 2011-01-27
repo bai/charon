@@ -78,11 +78,11 @@ class ServerTest < Test::Unit::TestCase
     end
 
     # 2.1
-    context "/login as credential requestor" do
+    context "/serviceLogin as credential requestor" do
       # 2.1.1
       context "parameters" do
         should "request credentials" do
-          get "/login"
+          get "/serviceLogin"
 
           assert_have_selector "form"
         end
@@ -91,7 +91,7 @@ class ServerTest < Test::Unit::TestCase
           setup { sso_session_for("quentin") }
 
           should "notify the client that it is already logged in" do
-            get "/login", {}, "HTTP_COOKIE" => @cookie
+            get "/serviceLogin", {}, "HTTP_COOKIE" => @cookie
 
             assert_match(/already logged in/, last_response.body)
           end
@@ -99,17 +99,17 @@ class ServerTest < Test::Unit::TestCase
 
         context "with a 'service' parameter" do
           should "be url-encoded" do
-            get "/login?service=#{@parser.escape(@test_service_url)}"
+            get "/serviceLogin?service=#{@parser.escape(@test_service_url)}"
             assert last_response.ok?
 
-            assert_raise(URI::InvalidURIError) { get "/login?service=#{@test_service_url}" }
+            assert_raise(URI::InvalidURIError) { get "/serviceLogin?service=#{@test_service_url}" }
           end
 
           context "a single sign-on session already exists" do
             setup { sso_session_for("quentin") }
 
             should "generate a service ticket and redirect to the service" do
-              get "/login", { :service => @test_service_url }, "HTTP_COOKIE" => @cookie
+              get "/serviceLogin", { :service => @test_service_url }, "HTTP_COOKIE" => @cookie
 
               assert last_response.redirect?
               assert_equal Addressable::URI.parse(@test_service_url).path,
@@ -117,8 +117,8 @@ class ServerTest < Test::Unit::TestCase
             end
 
             should "persist the ticket for retrieval later" do
-              get "/login", { :service => @test_service_url }, "HTTP_COOKIE" => @cookie
-              # post "/login", @params
+              get "/serviceLogin", { :service => @test_service_url }, "HTTP_COOKIE" => @cookie
+              # post "/serviceLogin", @params
               ticket_number = last_response.inspect[/ST-[A-Za-z0-9]+/]
               st = ServiceTicket.find!(ticket_number, @redis)
               assert_not_nil st
@@ -129,7 +129,7 @@ class ServerTest < Test::Unit::TestCase
           # Not specified, but good sanity check
           context "an invalid single sign-on session exists" do
             should "not generate a service ticket and rediect" do
-              get "/login", { :service => @test_service_url }, "HTTP_COOKIE" => "tgt=TGC-1234567"
+              get "/serviceLogin", { :service => @test_service_url }, "HTTP_COOKIE" => "tgt=TGC-1234567"
 
               assert !last_response.headers["Location"]
             end
@@ -143,7 +143,7 @@ class ServerTest < Test::Unit::TestCase
             setup { sso_session_for("quentin") }
 
             should "bypass single sign on and force the client to renew" do
-              get "/login", @params, "HTTP_COOKIE" => @cookie
+              get "/serviceLogin", @params, "HTTP_COOKIE" => @cookie
               body = last_response.body
               assert_have_selector "input[name='username']"
               assert_have_selector "input[name='password']"
@@ -162,7 +162,7 @@ class ServerTest < Test::Unit::TestCase
 
           # RECOMMENDED
           should "request credentials as though neither 'gateway' or 'service' were set" do
-            get "/login", @params
+            get "/serviceLogin", @params
 
             assert_have_selector "input[name='username']"
             assert_have_selector "input[name='password']"
@@ -173,7 +173,7 @@ class ServerTest < Test::Unit::TestCase
             setup { @params[:service] = @test_service_url }
 
             must "not ask for credentials" do
-              get "/login", @params
+              get "/serviceLogin", @params
 
               assert_have_no_selector "input[name='username']"
               assert_have_no_selector "input[name='password']"
@@ -181,7 +181,7 @@ class ServerTest < Test::Unit::TestCase
             end
 
             must "redirect the client to the service URL without a ticket" do
-              get "/login", @params
+              get "/serviceLogin", @params
 
               assert_equal(@test_service_url, last_response.headers["Location"])
             end
@@ -190,7 +190,7 @@ class ServerTest < Test::Unit::TestCase
               setup { sso_session_for("quentin") }
 
               may "redirect the client to the service URL, appending a valid service ticket" do
-                get "/login", @params, "HTTP_COOKIE" => @cookie
+                get "/serviceLogin", @params, "HTTP_COOKIE" => @cookie
 
                 assert last_response.redirect?
                 assert_equal Addressable::URI.parse(@test_service_url).path,
@@ -198,8 +198,8 @@ class ServerTest < Test::Unit::TestCase
               end
 
               should "persist the ticket for retrieval later" do
-                get "/login", @params, "HTTP_COOKIE" => @cookie
-                # post "/login", @params
+                get "/serviceLogin", @params, "HTTP_COOKIE" => @cookie
+                # post "/serviceLogin", @params
                 ticket_number = last_response.inspect[/ST-[A-Za-z0-9]+/]
                 st = ServiceTicket.find!(ticket_number, @redis)
                 assert_not_nil st
@@ -215,7 +215,7 @@ class ServerTest < Test::Unit::TestCase
       # 2.1.3
       context "response for username/password authentication" do
         must "include a form with the parameters, 'username', 'password', and 'lt'" do
-          get "/login"
+          get "/serviceLogin"
 
           assert_have_selector "input[name='username']"
           assert_have_selector "input[name='password']"
@@ -225,14 +225,14 @@ class ServerTest < Test::Unit::TestCase
 
 
         may "include the parameter 'warn' in the form" do
-          get "/login"
+          get "/serviceLogin"
 
           assert_have_selector "input[name='warn']"
         end
 
         context "with a 'service' parameter" do
           must "include the parameter 'service' in the form" do
-            get "/login?service=#{@parser.escape(@test_service_url)}"
+            get "/serviceLogin?service=#{@parser.escape(@test_service_url)}"
 
             assert_have_selector "input[name='service']"
             assert field_named("service").value == @test_service_url
@@ -241,14 +241,14 @@ class ServerTest < Test::Unit::TestCase
 
         context "the form" do
           must "be submitted through the HTTP POST method" do
-            get "/login"
+            get "/serviceLogin"
             assert_match(/method="post"/, last_response.body)
           end
 
 
-          must "be submitted to /login" do
-            get "/login"
-            assert_match(/action="\/login"/, last_response.body)
+          must "be submitted to /serviceLogin" do
+            get "/serviceLogin"
+            assert_match(/action="\/serviceLogin"/, last_response.body)
           end
         end
       end
@@ -270,7 +270,7 @@ class ServerTest < Test::Unit::TestCase
     end
 
     # 2.2
-    context "/login as credential acceptor" do
+    context "/serviceLogin as credential acceptor" do
       setup do
         @lt = LoginTicket.new
         @lt.save!(@redis)
@@ -291,18 +291,18 @@ class ServerTest < Test::Unit::TestCase
       # 2.2.2
       context "parameters for username/password authentication" do
         must "require 'username', 'password', and 'lt' (login ticket) parameters" do
-          post "/login"
+          post "/serviceLogin"
 
           assert !last_response.ok?
 
-          post "/login", { :username => "test", :password => "password", :lt => "LT-FAKE" }
+          post "/serviceLogin", { :username => "test", :password => "password", :lt => "LT-FAKE" }
 
           assert !last_response.ok?
 
-          post "/login", { :username => "test", :password => "password", :lt => @lt.ticket }
+          post "/serviceLogin", { :username => "test", :password => "password", :lt => @lt.ticket }
           assert last_response.ok?
 
-          post "/login", { :username => "test", :password => "password", :lt => @lt.ticket }
+          post "/serviceLogin", { :username => "test", :password => "password", :lt => @lt.ticket }
           assert !last_response.ok?
         end
       end
@@ -318,7 +318,7 @@ class ServerTest < Test::Unit::TestCase
           setup { @params = { :username => "test", :password => "password", :lt => @lt.ticket } }
 
           should "set a ticket-granting cookie" do
-            post "/login", @params
+            post "/serviceLogin", @params
             assert_match(/tgt=TGC-/, last_response.headers.to_s)
           end
 
@@ -329,24 +329,24 @@ class ServerTest < Test::Unit::TestCase
             end
 
             must "redirect the client to the URL specified by the 'service' parameter" do
-              post "/login", @params
+              post "/serviceLogin", @params
               assert last_response.redirect?
               assert_match @service_param_url, last_response.headers["Location"]
             end
 
             must "not forward the client's credentials to the 'service'" do
-              post "/login", @params
+              post "/serviceLogin", @params
               assert_no_match(/testpassword/, last_response.inspect)
               assert_no_match(/quentin/, last_response.inspect)
             end
 
             must "cause the client to send a GET request to the 'service'" do
-              post "/login", @params
+              post "/serviceLogin", @params
               assert_equal 303, last_response.status
             end
 
             must "include a valid service ticket, passed as the HTTP request parameter, 'ticket' with request" do
-              post "/login", @params
+              post "/serviceLogin", @params
               assert_match(/ticket/, last_response.inspect)
               assert_match(/ST-[0-9]+/, last_response.inspect)
             end
@@ -356,13 +356,13 @@ class ServerTest < Test::Unit::TestCase
               setup { @params[:warn] = "true" }
 
               must "prompt the client before authenticating to another service" do
-                post "/login", @params
+                post "/serviceLogin", @params
                 assert !last_response.redirect?
               end
             end
 
             should "persist the ticket for retrieval later" do
-              post "/login", @params
+              post "/serviceLogin", @params
               ticket_number = last_response.inspect[/ST-[A-Za-z0-9]+/]
               st = ServiceTicket.find!(ticket_number, @redis)
               assert_not_nil st
@@ -371,14 +371,14 @@ class ServerTest < Test::Unit::TestCase
           end
 
           must "display a message notifying the client that it has successfully initiated a single sign-on session" do
-            post "/login", @params
+            post "/serviceLogin", @params
             assert !last_response.redirect?
           end
         end
 
         context "with failure" do
-          should "return to /login as a credential requester" do
-            post "/login"
+          should "return to /serviceLogin as a credential requester" do
+            post "/serviceLogin"
 
             # Don't care if it's a redirect or not
             follow_redirect!
@@ -392,43 +392,43 @@ class ServerTest < Test::Unit::TestCase
           # Will implement with some kind of flash message
           should "display an error message describing why login failed" do
             @params = { :username => "test", :password => "badpassword", :lt => @lt.ticket }
-            post "/login", @params
+            post "/serviceLogin", @params
             assert_match(/Login was not successful/, last_response.body)
           end
 
           # RECOMMENDED
           should "provide an opportunity to attempt to login again"
-          # As "return to /login as a credential requester"
+          # As "return to /serviceLogin as a credential requester"
         end
       end
     end
 
     # 2.3
-    context "/logout" do
+    context "/serviceLogout" do
       setup { sso_session_for("quentin") }
 
       should "destroy the ticket granting ticket" do
         assert_not_nil TicketGrantingTicket.validate(@tgt.ticket, @redis)
-        get "/logout", "","HTTP_COOKIE" => @cookie
+        get "/serviceLogout", "","HTTP_COOKIE" => @cookie
         assert_nil TicketGrantingTicket.validate(@tgt.ticket, @redis)
       end
 
       # not in protocol but inferred
       should "display a flash message to the user stating they are logged out" do
-        get "/logout", "","HTTP_COOKIE" => @cookie
+        get "/serviceLogout", "","HTTP_COOKIE" => @cookie
         assert_match(/You have successfully logged out/, last_response.body)
       end
 
       # not in protocol but inferred
       should "show login page" do
-        get "/logout", "","HTTP_COOKIE" => @cookie
+        get "/serviceLogout", "","HTTP_COOKIE" => @cookie
         assert_have_selector "input[name='username']"
         assert_have_selector "input[name='password']"
       end
 
       context "optional url parameter" do
         setup do
-          get "/logout", { :url => "http://myreturn.app" },"HTTP_COOKIE" => @cookie
+          get "/serviceLogout", { :url => "http://myreturn.app" },"HTTP_COOKIE" => @cookie
         end
 
         must "display a page stating the user has been logged out" do
@@ -654,7 +654,7 @@ class ServerTest < Test::Unit::TestCase
 
       # 3.1.1
       context "properties" do
-        should "be valid only for the service that was specified to /login when they were generated" do
+        should "be valid only for the service that was specified to /serviceLogin when they were generated" do
           assert @st.valid_for_service?(@test_service_url)
           assert !@st.valid_for_service?("http://google.com")
         end

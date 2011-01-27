@@ -60,11 +60,7 @@ module Authentication
       I18n.locale = determine_locale
     end
 
-    get "/" do
-      redirect "/login"
-    end
-
-    get "/login" do
+    get "/serviceLogin" do
       @service_url = Addressable::URI.parse(params[:service])
       @renew = [ true, "true", "1", 1 ].include?(params[:renew])
       @gateway = [ true, "true", "1", 1 ].include?(params[:gateway])
@@ -113,7 +109,7 @@ module Authentication
       end
     end
 
-    post "/login" do
+    post "/serviceLogin" do
       username = params[:username]
       password = params[:password]
 
@@ -121,7 +117,7 @@ module Authentication
 
       warn = [ true, "true", "1", 1 ].include? params[:warn]
       # Spec is undefined about what to do without these params, so redirecting to credential requestor
-      redirect "/login", 303 unless username && password && login_ticket
+      redirect "/serviceLogin", 303 unless username && password && login_ticket
       # Failures will throw back to self, which we've registered with Warden to handle login failures
       warden.authenticate!(:scope => :cas, :action => "unauthenticated")
 
@@ -164,7 +160,7 @@ module Authentication
     end
 
     # TODO: Think about more sane single sign-out solution than @logout = true.
-    get "/logout" do
+    get "/serviceLogout" do
       url = params[:url]
 
       if sso_session
