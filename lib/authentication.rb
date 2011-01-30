@@ -37,6 +37,8 @@ module Authentication
     set :root, File.join(File.dirname(__FILE__), "/..")
     set :public, File.join(root, "/public")
     set :warden_strategies, [ :simple ]
+    set :services, { "pipeline" => "http://pipeline.metaconomy.com" }
+    set :error_codes, { 200 => "OK", 101 => "Invalid service", 102 => "Invalid request", 103 => "Invalid ticket" }
 
     register Sinatra::I18n
 
@@ -52,18 +54,15 @@ module Authentication
       )
     end
 
-    configure :development do
-      set :dump_errors
-    end
-
     before do
-      I18n.locale = determine_locale
+      I18n.locale = params[:l] || "en"
     end
 
     get "/serviceLogin" do
-      @service_url = Addressable::URI.parse(params[:service])
-      @renew = [ true, "true", "1", 1 ].include?(params[:renew])
-      @gateway = [ true, "true", "1", 1 ].include?(params[:gateway])
+      @service = params[:s]
+      @service_url = service_url(@service)
+      @renew = [ true, "true", "1", 1 ].include?(params[:r])
+      @gateway = [ true, "true", "1", 1 ].include?(params[:g])
 
       if @renew
         @login_ticket = LoginTicket.create!(settings.redis)
@@ -71,13 +70,13 @@ module Authentication
       elsif @gateway
         if @service_url
           if sso_session
-            st = ServiceTicket.new(params[:service], sso_session.username)
+            st = ServiceTicket.new(params[:s], sso_session.username)
             st.save!(settings.redis)
             redirect_url = @service_url.clone
             if @service_url.query_values.nil?
-              redirect_url.query_values = @service_url.query_values = { :ticket => st.ticket }
+              redirect_url.query_values = @service_url.query_values = { :t => st.ticket }
             else
-              redirect_url.query_values = @service_url.query_values.merge(:ticket => st.ticket)
+              redirect_url.query_values = @service_url.query_values.merge(:t => st.ticket)
             end
             redirect redirect_url.to_s, 303
           else
@@ -90,13 +89,13 @@ module Authentication
       else
         if sso_session
           if @service_url
-            st = ServiceTicket.new(params[:service], sso_session.username)
+            st = ServiceTicket.new(@service_url, sso_session.username)
             st.save!(settings.redis)
             redirect_url = @service_url.clone
             if @service_url.query_values.nil?
-              redirect_url.query_values = @service_url.query_values = { :ticket => st.ticket }
+              redirect_url.query_values = @service_url.query_values = { :t => st.ticket }
             else
-              redirect_url.query_values = @service_url.query_values.merge(:ticket => st.ticket)
+              redirect_url.query_values = @service_url.query_values.merge(:t => st.ticket)
             end
             redirect redirect_url.to_s, 303
           else
@@ -110,10 +109,7 @@ module Authentication
     end
 
     post "/serviceLogin" do
-      username = params[:username]
-      password = params[:password]
-
-      service_url = params[:service]
+      username, password, service = params[:username], params[:password], params[:s]
 
       warn = [ true, "true", "1", 1 ].include? params[:warn]
       # Spec is undefined about what to do without these params, so redirecting to credential requestor
@@ -126,37 +122,33 @@ module Authentication
       cookie = tgt.to_cookie(request.host)
       response.set_cookie(*cookie)
 
-      if service_url && !warn
-        st = ServiceTicket.new(service_url, username)
+      if service_url(service) && !warn
+        st = ServiceTicket.new(service_url(service), username)
         st.save!(settings.redis)
-        redirect service_url + "?ticket=#{st.ticket}", 303
+        redirect service_url(service) + "?t=#{st.ticket}", 303
       else
         render_logged_in
       end
     end
 
     get %r{(proxy|service)Validate} do
-      service_url = params[:service]
-      ticket = params[:ticket]
-      # proxy_gateway = params[:pgtUrl]
-      # renew = params[:renew]
+      service, ticket = params[:s], params[:t]
 
-      xml = if service_url && ticket
+      result = if service_url(service) && ticket
         if service_ticket
-          if service_ticket.valid_for_service?(service_url)
-            render_validation_success service_ticket.username
+          if service_ticket.valid_for_service?(service_url(service))
+            [ 200, { "username" => service_ticket.username } ]
           else
-            render_validation_error(:invalid_service)
+            [ 101 ]
           end
         else
-          render_validation_error(:invalid_ticket, "ticket #{ticket} not recognized")
+          [ 103 ]
         end
       else
-        render_validation_error(:invalid_request)
+        [ 102 ]
       end
 
-      content_type :xml
-      xml
+      resp(*result)
     end
 
     # TODO: Think about more sane single sign-out solution than @logout = true.
@@ -168,11 +160,6 @@ module Authentication
         response.delete_cookie(*sso_session.to_cookie(request.host))
         warden.logout(:cas)
         flash.now[:notice] = t("logout_successful")
-        if url
-          msg = "  The application you just logged out of has provided a link it would like you to follow."
-          msg += "Please <a href=\"#{url}\">click here</a> to access <a href=\"#{url}\">#{url}</a>"
-          flash.now[:notice] += msg
-        end
       end
       @login_ticket = LoginTicket.create!(settings.redis)
       render_login
@@ -190,10 +177,6 @@ module Authentication
 
     def render_logged_in
       erb :logged_in
-    end
-
-    # Override to add user info back to client applications
-    def append_user_info(xml)
     end
 
     private
@@ -217,53 +200,13 @@ module Authentication
         @service_ticket ||= ServiceTicket.find!(params[:ticket], settings.redis)
       end
 
-      def render_validation_error(code, message = nil)
-        Nokogiri::XML::Builder.new do |xml|
-          xml.serviceResponse("xmlns:cas" => "http://www.yale.edu/tp/cas") {
-            xml.parent.namespace = xml.parent.namespace_definitions.first
-            xml["cas"].authenticationFailure(message, :code => code.to_s.upcase)
-          }
-        end.to_xml
+      def service_url(service)
+        Addressable::URI.parse(settings.services[service] + "/auth/remote/callback")
       end
 
-      def render_validation_success(username)
-        Nokogiri::XML::Builder.new do |xml|
-          xml.serviceResponse("xmlns:cas" => "http://www.yale.edu/tp/cas") {
-            xml.parent.namespace = xml.parent.namespace_definitions.first
-            xml["cas"].authenticationSuccess {
-              xml["cas"].user username
-              append_user_info(xml)
-            }
-          }
-        end.to_xml
-      end
-
-      def determine_locale
-        language = case
-          when params[:l] && !params[:l].empty?
-            params[:l]
-          when request.env["HTTP_ACCEPT_LANGUAGE"] && !request.env["HTTP_ACCEPT_LANGUAGE"].empty?
-            request.env["HTTP_ACCEPT_LANGUAGE"]
-          when request.env["HTTP_USER_AGENT"] && !request.env["HTTP_USER_AGENT"].empty? && request.env["HTTP_USER_AGENT"] =~ /[^a-z]([a-z]{2}(-[a-z]{2})?)[^a-z]/i
-            $~[1]
-          else
-            "en"
-        end.gsub("_", "-")
-
-        # TODO: Need to confirm that this method of splitting the accepted language string is correct.
-        if language =~ /[,;\|]/
-          languages = language.split(/[,;\|]/)
-        else
-          languages = [ language ]
-        end
-
-        # Try to pick a locale exactly matching the desired identifier, otherwise fall back to locale without region
-        # (i.e. given "en-US; de-DE", we would first look for "en-US", then "en", then "de-DE", then "de").
-        #
-        # TODO: This method of selecting the desired language might not be standards-compliant. For example,
-        # http://www.w3.org/TR/ltli/ suggests that de-de and de-*-DE might be acceptable identifiers for selecting
-        # various wildcards. The algorithm below does not currently support anything like this.
-        settings.locales.find { |a| a =~ Regexp.new("\\A#{languages.join('|')}\\Z", "i") || a =~ Regexp.new("#{languages.join('|')}-\w*", "i") } || "en"
+      def resp(status, data = nil)
+        content_type :json
+        { :status => status, :data => data }.to_json
       end
   end
 end

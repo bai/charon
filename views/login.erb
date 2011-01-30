@@ -18,8 +18,8 @@
   </div>
   <input name="lt" type="hidden" value="<%= @login_ticket.ticket %>">
   <input name="warn" type="hidden">
-  <% if @service_url %>
-    <input name="service" type="hidden" value="<%= @service_url %>">
+  <% if @service %>
+    <input name="s" type="hidden" value="<%= @service %>">
   <% end %>
   <div class="actions">
     <input type="submit" value="<%= t("login_button") %>">
