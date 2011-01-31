@@ -60,7 +60,7 @@ module Authentication
 
       if @renew
         @login_ticket = LoginTicket.create!(settings.redis)
-        render_login
+        erb(:login)
       elsif @gateway
         if @service_url
           if sso_session
@@ -78,7 +78,7 @@ module Authentication
           end
         else
           @login_ticket = LoginTicket.create!(settings.redis)
-          render_login
+          erb(:login)
         end
       else
         if sso_session
@@ -93,11 +93,11 @@ module Authentication
             end
             redirect redirect_url.to_s, 303
           else
-            render_logged_in
+            erb(:logged_in)
           end
         else
           @login_ticket = LoginTicket.create!(settings.redis)
-          render_login
+          erb(:login)
         end
       end
     end
@@ -121,7 +121,7 @@ module Authentication
         st.save!(settings.redis)
         redirect service_url(service) + "?t=#{st.ticket}", 303
       else
-        render_logged_in
+        erb(:logged_in)
       end
     end
 
@@ -155,20 +155,12 @@ module Authentication
         warden.logout(:cas)
       end
       @login_ticket = LoginTicket.create!(settings.redis)
-      render_login
+      erb(:login)
     end
 
     post "/unauthenticated" do
       @login_ticket = LoginTicket.create!(settings.redis)
-      render_login
-    end
-
-    def render_login
-      erb :login
-    end
-
-    def render_logged_in
-      erb :logged_in
+      erb(:login)
     end
 
     private
