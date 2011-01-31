@@ -6,7 +6,6 @@ gem "redis"
 gem "addressable"
 gem "yajl-ruby", :require => "yajl"
 gem "rack"
-gem "rack-flash"
 gem "warden"
 gem "crypt-isaac", :git => "git://github.com/bai/crypt-isaac.git"
 

@@ -43,7 +43,6 @@ module Authentication
     register Sinatra::I18n
 
     use Rack::Session::Cookie
-    use Rack::Flash, :accessorize => [ :notice, :error ]
     use Warden::Manager do |manager|
       manager.failure_app = self
       manager.default_scope = :cas
@@ -159,7 +158,6 @@ module Authentication
         @sso_session.destroy!(settings.redis)
         response.delete_cookie(*sso_session.to_cookie(request.host))
         warden.logout(:cas)
-        flash.now[:notice] = t("logout_successful")
       end
       @login_ticket = LoginTicket.create!(settings.redis)
       render_login
@@ -167,7 +165,6 @@ module Authentication
 
     post "/unauthenticated" do
       @login_ticket = LoginTicket.create!(settings.redis)
-      flash[:error] = t("login_failed")
       render_login
     end
 
