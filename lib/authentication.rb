@@ -36,7 +36,6 @@ module Authentication
     set :locales, %w(en ru)
     set :root, File.join(File.dirname(__FILE__), "/..")
     set :public, File.join(root, "/public")
-    set :warden_strategies, [ :simple ]
     set :services, { "pipeline" => "http://pipeline.metaconomy.com" }
     set :error_codes, { 200 => "OK", 101 => "Invalid service", 102 => "Invalid request", 103 => "Invalid ticket" }
 
@@ -46,11 +45,7 @@ module Authentication
     use Warden::Manager do |manager|
       manager.failure_app = self
       manager.default_scope = :cas
-
-      manager.scope_defaults(:cas,
-        :strategies => settings.warden_strategies,
-        :action => "login"
-      )
+      manager.scope_defaults(:cas, :strategies => [ :simple ], :action => "login")
     end
 
     before do
