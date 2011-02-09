@@ -36,7 +36,7 @@ module Authentication
     set :locales, %w(en ru)
     set :root, File.join(File.dirname(__FILE__), "/..")
     set :public, File.join(root, "/public")
-    set :services, { "pipeline" => "http://pipeline.metaconomy.com" }
+    set :services, { "pipeline" => "http://pipeline.metaconomy.com", "account" => "http://account.metaconomy.com" }
     set :error_codes, { 200 => "OK", 101 => "Invalid service", 102 => "Invalid request", 103 => "Invalid ticket" }
 
     register Sinatra::I18n
@@ -64,7 +64,7 @@ module Authentication
       elsif @gateway
         if @service_url
           if ticket_granting_ticket
-            st = ServiceTicket.new(params[:s], ticket_granting_ticket.username)
+            st = ServiceTicket.new(@service, ticket_granting_ticket.username)
             st.save!(settings.redis)
             redirect_url = @service_url.clone
             if @service_url.query_values.nil?
@@ -83,7 +83,7 @@ module Authentication
       else
         if ticket_granting_ticket
           if @service_url
-            st = ServiceTicket.new(@service_url, ticket_granting_ticket.username)
+            st = ServiceTicket.new(@service, ticket_granting_ticket.username)
             st.save!(settings.redis)
             redirect_url = @service_url.clone
             if @service_url.query_values.nil?
@@ -103,10 +103,14 @@ module Authentication
     end
 
     post "/serviceLogin" do
-      username, password, service = params[:username], params[:password], params[:s]
+      username = params[:username]
+      password = params[:password]
+      service  = params[:s]
+
+      # raise [ username, password, service, login_ticket ].inspect
 
       # Redirecting to credential requestor if we don't have these params
-      redirect "/serviceLogin", 303 unless username && password && login_ticket
+      # redirect "/serviceLogin" + "?s=account", 303 unless username && password && service && login_ticket
       # Failures will throw back to self, which we've registered with Warden to handle login failures
       warden.authenticate!(:scope => :cas, :action => "unauthenticated")
 
@@ -115,8 +119,8 @@ module Authentication
       cookie = tgt.to_cookie(request.host)
       response.set_cookie(*cookie)
 
-      if service_url(service) && !warn
-        st = ServiceTicket.new(service_url(service), username)
+      if service_url(service)
+        st = ServiceTicket.new(service, username)
         st.save!(settings.redis)
         redirect service_url(service) + "?t=#{st.ticket}", 303
       else
@@ -129,7 +133,7 @@ module Authentication
 
       result = if service_url(service) && ticket
         if service_ticket
-          if service_ticket.valid_for_service?(service_url(service))
+          if service_ticket.valid_for_service?(service)
             [ 200, { "username" => service_ticket.username } ]
           else
             [ 101 ]
