@@ -63,8 +63,8 @@ module Authentication
         erb(:login)
       elsif @gateway
         if @service_url
-          if sso_session
-            st = ServiceTicket.new(params[:s], sso_session.username)
+          if ticket_granting_ticket
+            st = ServiceTicket.new(params[:s], ticket_granting_ticket.username)
             st.save!(settings.redis)
             redirect_url = @service_url.clone
             if @service_url.query_values.nil?
@@ -81,9 +81,9 @@ module Authentication
           erb(:login)
         end
       else
-        if sso_session
+        if ticket_granting_ticket
           if @service_url
-            st = ServiceTicket.new(@service_url, sso_session.username)
+            st = ServiceTicket.new(@service_url, ticket_granting_ticket.username)
             st.save!(settings.redis)
             redirect_url = @service_url.clone
             if @service_url.query_values.nil?
@@ -105,8 +105,7 @@ module Authentication
     post "/serviceLogin" do
       username, password, service = params[:username], params[:password], params[:s]
 
-      warn = [ true, "true", "1", 1 ].include? params[:warn]
-      # Spec is undefined about what to do without these params, so redirecting to credential requestor
+      # Redirecting to credential requestor if we don't have these params
       redirect "/serviceLogin", 303 unless username && password && login_ticket
       # Failures will throw back to self, which we've registered with Warden to handle login failures
       warden.authenticate!(:scope => :cas, :action => "unauthenticated")
@@ -145,13 +144,12 @@ module Authentication
       resp(*result)
     end
 
-    # TODO: Think about more sane single sign-out solution than @logout = true.
     get "/serviceLogout" do
       url = params[:url]
 
-      if sso_session
-        @sso_session.destroy!(settings.redis)
-        response.delete_cookie(*sso_session.to_cookie(request.host))
+      if ticket_granting_ticket
+        @ticket_granting_ticket.destroy!(settings.redis)
+        response.delete_cookie(*ticket_granting_ticket.to_cookie(request.host))
         warden.logout(:cas)
       end
       @login_ticket = LoginTicket.create!(settings.redis)
@@ -168,12 +166,8 @@ module Authentication
         request.env["warden"]
       end
 
-      def sso_session
-        @sso_session ||= TicketGrantingTicket.validate(request.cookies["tgt"], settings.redis)
-      end
-
       def ticket_granting_ticket
-        @ticket_granting_ticket ||= sso_session
+        @ticket_granting_ticket ||= TicketGrantingTicket.validate(request.cookies["tgt"], settings.redis)
       end
 
       def login_ticket
