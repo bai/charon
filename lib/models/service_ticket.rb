@@ -2,11 +2,11 @@ class ServiceTicket < Ticket
   class << self
     def find!(ticket, store)
       username = store.hget(ticket, :username)
-      service_url = store.hget(ticket, :service_url)
+      service = store.hget(ticket, :service)
 
-      if service_url && username
+      if service && username
         store.del ticket
-        new(service_url, username)
+        new(service, username)
       end
     end
 
@@ -15,15 +15,15 @@ class ServiceTicket < Ticket
     end
   end
 
-  attr_reader :username, :service_url
+  attr_reader :username, :service
 
-  def initialize(service_url, username)
-    @service_url = service_url
+  def initialize(service, username)
+    @service = service
     @username = username
   end
 
-  def valid_for_service?(url)
-    service_url == url
+  def valid_for_service?(s)
+    service == s
   end
 
   def ticket
@@ -36,7 +36,7 @@ class ServiceTicket < Ticket
 
   def save!(store)
     store.pipelined do
-      store.hset ticket, :service_url, self.service_url
+      store.hset ticket, :service, self.service
       store.hset ticket, :username, self.username
       store.expire ticket, self.class.expire_time
     end

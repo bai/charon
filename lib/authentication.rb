@@ -36,7 +36,7 @@ module Authentication
     set :locales, %w(en ru)
     set :root, File.join(File.dirname(__FILE__), "/..")
     set :public, File.join(root, "/public")
-    set :services, { "pipeline" => "http://pipeline.metaconomy.com", "account" => "http://account.metaconomy.com" }
+    set :services, { "pipeline" => "http://127.0.0.1:3000", "account" => "http://127.0.0.1:3000" }
     set :error_codes, { 200 => "OK", 101 => "Invalid service", 102 => "Invalid request", 103 => "Invalid ticket" }
 
     register Sinatra::I18n
@@ -44,8 +44,8 @@ module Authentication
     use Rack::Session::Cookie
     use Warden::Manager do |manager|
       manager.failure_app = self
-      manager.default_scope = :cas
-      manager.scope_defaults(:cas, :strategies => [ :simple ], :action => "login")
+      manager.default_scope = :remote
+      manager.scope_defaults(:remote, :strategies => [ :simple ], :action => "login")
     end
 
     before do
@@ -67,11 +67,12 @@ module Authentication
             st = ServiceTicket.new(@service, ticket_granting_ticket.username)
             st.save!(settings.redis)
             redirect_url = @service_url.clone
-            if @service_url.query_values.nil?
-              redirect_url.query_values = @service_url.query_values = { :t => st.ticket }
-            else
-              redirect_url.query_values = @service_url.query_values.merge(:t => st.ticket)
-            end
+            #raise [ st.ticket, @service_url, @service_url.query_values ].inspect
+            #if @service_url.query_values.nil?
+            #  redirect_url.query_values = @service_url.query_values = { :t => st.ticket }
+            #else
+            #  redirect_url.query_values = @service_url.query_values.merge(:t => st.ticket)
+            #end
             redirect redirect_url.to_s, 303
           else
             redirect @service_url.to_s, 303
@@ -86,11 +87,11 @@ module Authentication
             st = ServiceTicket.new(@service, ticket_granting_ticket.username)
             st.save!(settings.redis)
             redirect_url = @service_url.clone
-            if @service_url.query_values.nil?
-              redirect_url.query_values = @service_url.query_values = { :t => st.ticket }
-            else
-              redirect_url.query_values = @service_url.query_values.merge(:t => st.ticket)
-            end
+            #if @service_url.query_values.nil?
+            #  redirect_url.query_values = @service_url.query_values = { :t => st.ticket }
+            #else
+            #  redirect_url.query_values = @service_url.query_values.merge(:t => st.ticket)
+            #end
             redirect redirect_url.to_s, 303
           else
             erb(:logged_in)
@@ -112,7 +113,7 @@ module Authentication
       # Redirecting to credential requestor if we don't have these params
       # redirect "/serviceLogin" + "?s=account", 303 unless username && password && service && login_ticket
       # Failures will throw back to self, which we've registered with Warden to handle login failures
-      warden.authenticate!(:scope => :cas, :action => "unauthenticated")
+      warden.authenticate!(:scope => :remote, :action => "unauthenticated")
 
       tgt = TicketGrantingTicket.new(username)
       tgt.save!(settings.redis)
@@ -154,7 +155,7 @@ module Authentication
       if ticket_granting_ticket
         @ticket_granting_ticket.destroy!(settings.redis)
         response.delete_cookie(*ticket_granting_ticket.to_cookie(request.host))
-        warden.logout(:cas)
+        warden.logout(:remote)
       end
       @login_ticket = LoginTicket.create!(settings.redis)
       erb(:login)
@@ -183,12 +184,13 @@ module Authentication
       end
 
       def service_url(service)
-        Addressable::URI.parse(settings.services[service] + "/auth/remote/callback")
+        # Addressable::URI.parse(settings.services[service] + "/auth/remote/callback")
+        settings.services[service] + "/auth/remote/callback"
       end
 
       def resp(status, data = nil)
         content_type :json
-        { :status => status, :data => data }.to_json
+        Yajl::Encoder.encode(:status => status, :data => data)
       end
   end
 end
