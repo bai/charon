@@ -67,12 +67,11 @@ module Authentication
             st = ServiceTicket.new(@service, ticket_granting_ticket.username)
             st.save!(settings.redis)
             redirect_url = @service_url.clone
-            #raise [ st.ticket, @service_url, @service_url.query_values ].inspect
-            #if @service_url.query_values.nil?
-            #  redirect_url.query_values = @service_url.query_values = { :t => st.ticket }
-            #else
-            #  redirect_url.query_values = @service_url.query_values.merge(:t => st.ticket)
-            #end
+            if @service_url.query_values.nil?
+              redirect_url.query_values = @service_url.query_values = { :t => st.ticket }
+            else
+              redirect_url.query_values = @service_url.query_values.merge(:t => st.ticket)
+            end
             redirect redirect_url.to_s, 303
           else
             redirect @service_url.to_s, 303
@@ -87,11 +86,11 @@ module Authentication
             st = ServiceTicket.new(@service, ticket_granting_ticket.username)
             st.save!(settings.redis)
             redirect_url = @service_url.clone
-            #if @service_url.query_values.nil?
-            #  redirect_url.query_values = @service_url.query_values = { :t => st.ticket }
-            #else
-            #  redirect_url.query_values = @service_url.query_values.merge(:t => st.ticket)
-            #end
+            if @service_url.query_values.nil?
+              redirect_url.query_values = @service_url.query_values = { :t => st.ticket }
+            else
+              redirect_url.query_values = @service_url.query_values.merge(:t => st.ticket)
+            end
             redirect redirect_url.to_s, 303
           else
             erb(:logged_in)
@@ -180,12 +179,11 @@ module Authentication
       end
 
       def service_ticket
-        @service_ticket ||= ServiceTicket.find!(params[:ticket], settings.redis)
+        @service_ticket ||= ServiceTicket.find!(params[:t], settings.redis)
       end
 
       def service_url(service)
-        # Addressable::URI.parse(settings.services[service] + "/auth/remote/callback")
-        settings.services[service] + "/auth/remote/callback"
+        Addressable::URI.parse(settings.services[service] + "/auth/remote/callback")
       end
 
       def resp(status, data = nil)
