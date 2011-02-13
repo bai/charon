@@ -37,7 +37,7 @@ module Authentication
     set :root, File.join(File.dirname(__FILE__), "/..")
     set :public, File.join(root, "/public")
     set :services, { "pipeline" => "http://127.0.0.1:3000", "account" => "http://127.0.0.1:3000" }
-    set :error_codes, { 200 => "OK", 101 => "Invalid service", 102 => "Invalid request", 103 => "Invalid ticket" }
+    set :error_codes, { "OK" => 200, "INVALID_SERVICE" => 101, "INVALID_REQUEST" => 102, "INVALID_TICKET" => 103 }
 
     register Sinatra::I18n
 
@@ -134,15 +134,15 @@ module Authentication
       result = if service_url(service) && ticket
         if service_ticket
           if service_ticket.valid_for_service?(service)
-            [ 200, { "username" => service_ticket.username } ]
+            [ settings.error_codes["OK"], { "username" => service_ticket.username } ]
           else
-            [ 101 ]
+            [ settings.error_codes["INVALID_SERVICE"] ]
           end
         else
-          [ 103 ]
+          [ settings.error_codes["INVALID_TICKET"] ]
         end
       else
-        [ 102 ]
+        [ settings.error_codes["INVALID_REQUEST"] ]
       end
 
       resp(*result)

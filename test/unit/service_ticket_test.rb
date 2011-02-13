@@ -13,11 +13,11 @@ class ServiceTicketTest < Test::Unit::TestCase
     context "find!" do
       should "be able to retrieve the username" do
         assert_equal("quentin", @st.username)
-        assert_equal("http://localhost", @st.service_url)
+        assert_equal("http://localhost", @st.service)
 
         st2 = ServiceTicket.find!(@st.ticket, @redis)
         assert_equal("quentin", st2.username)
-        assert_equal("http://localhost", st2.service_url)
+        assert_equal("http://localhost", st2.service)
       end
 
       should "only be retrievable once" do
