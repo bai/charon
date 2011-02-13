@@ -21,53 +21,43 @@ class ServerTest < Test::Unit::TestCase
     @tgt
   end
 
-  def assert_valid_xml(xml)
-    assert @xsd.validate(xml)
-    assert_match(/cas:serviceResponse/, xml.root.to_s)
+  def assert_invalid_request_json_response(last_response)
+    assert_equal("application/json", last_response.content_type)
+    json = Yajl::Parser.parse(last_response.body)
+
+    assert !json["status"].empty?, "Expected authentication failure status code in #{json}"
+    assert json["status"] < 200, "Expected failure status code to be less than 200"
   end
 
-  def assert_invalid_request_xml_response(last_response)
-    assert_equal("application/xml;charset=utf-8", last_response.content_type)
-    xml = Nokogiri::XML.parse(last_response.body)
-    assert_valid_xml(xml)
+  def assert_authentication_success_json_response(last_response)
+    assert_equal("application/json", last_response.content_type)
+    json = Yajl::Parser.parse(last_response.body)
 
-    assert !xml.xpath("//cas:authenticationFailure", { "cas" => "http://www.yale.edu/tp/cas" }).empty?, "Expected authenticationFailure in #{xml}"
-    assert_equal("INVALID_REQUEST", xml.xpath("//cas:authenticationFailure/@code", { "cas" => "http://www.yale.edu/tp/cas" })[0].content)
+    assert !json.xpath("//cas:authenticationSuccess", { "cas" => "http://www.yale.edu/tp/cas" }).empty?, "Expected authenticationSuccess in #{json}"
+    assert_equal("quentin", json.xpath("//cas:user", { "cas" => "http://www.yale.edu/tp/cas" })[0].content)
   end
 
-  def assert_authentication_success_xml_response(last_response)
-    assert_equal("application/xml;charset=utf-8", last_response.content_type)
-    xml = Nokogiri::XML.parse(last_response.body)
-    assert_valid_xml(xml)
+  def assert_invalid_ticket_json_response(last_response)
+    assert_equal("application/json", last_response.content_type)
+    json = Yajl::Parser.parse(last_response.body)
 
-    assert !xml.xpath("//cas:authenticationSuccess", { "cas" => "http://www.yale.edu/tp/cas" }).empty?, "Expected authenticationSuccess in #{xml}"
-    assert_equal("quentin", xml.xpath("//cas:user", { "cas" => "http://www.yale.edu/tp/cas" })[0].content)
+    assert !json.xpath("//cas:authenticationFailure", { "cas" => "http://www.yale.edu/tp/cas" }).empty?, "Expected authenticationFailure in #{json}"
+    assert_equal("INVALID_TICKET", json.xpath("//cas:authenticationFailure/@code", { "cas" => "http://www.yale.edu/tp/cas" })[0].content)
   end
 
-  def assert_invalid_ticket_xml_response(last_response)
-    assert_equal("application/xml;charset=utf-8", last_response.content_type)
-    xml = Nokogiri::XML.parse(last_response.body)
-    assert_valid_xml(xml)
+  def assert_authenticate_failure_json_response(last_response)
+    assert_equal("application/json", last_response.content_type)
+    json = Yajl::Parser.parse(last_response.body)
 
-    assert !xml.xpath("//cas:authenticationFailure", { "cas" => "http://www.yale.edu/tp/cas" }).empty?, "Expected authenticationFailure in #{xml}"
-    assert_equal("INVALID_TICKET", xml.xpath("//cas:authenticationFailure/@code", { "cas" => "http://www.yale.edu/tp/cas" })[0].content)
+    assert !json.xpath("//cas:authenticationFailure", { "cas" => "http://www.yale.edu/tp/cas" }).empty?, "Expected authenticationFailure in #{json}"
   end
 
-  def assert_authenticate_failure_xml_response(last_response)
-    assert_equal("application/xml;charset=utf-8", last_response.content_type)
-    xml = Nokogiri::XML.parse(last_response.body)
-    assert_valid_xml(xml)
+  def assert_invalid_service_json_response(last_response)
+    assert_equal("application/json", last_response.content_type)
+    json = Yajl::Parser.parse(last_response.body)
 
-    assert !xml.xpath("//cas:authenticationFailure", { "cas" => "http://www.yale.edu/tp/cas" }).empty?, "Expected authenticationFailure in #{xml}"
-  end
-
-  def assert_invalid_service_xml_response(last_response)
-    assert_equal("application/xml;charset=utf-8", last_response.content_type)
-    xml = Nokogiri::XML.parse(last_response.body)
-    assert_valid_xml(xml)
-
-    assert !xml.xpath("//cas:authenticationFailure", { "cas" => "http://www.yale.edu/tp/cas" }).empty?, "Expected authenticationFailure in #{xml}"
-    assert_equal("INVALID_SERVICE", xml.xpath("//cas:authenticationFailure/@code", { "cas" => "http://www.yale.edu/tp/cas" })[0].content)
+    assert !json.xpath("//cas:authenticationFailure", { "cas" => "http://www.yale.edu/tp/cas" }).empty?, "Expected authenticationFailure in #{json}"
+    assert_equal("INVALID_SERVICE", json.xpath("//cas:authenticationFailure/@code", { "cas" => "http://www.yale.edu/tp/cas" })[0].content)
   end
 
   context "An authentication server" do
@@ -460,8 +450,6 @@ class ServerTest < Test::Unit::TestCase
       setup do
         @st = ServiceTicket.new(@test_service_url, "quentin")
         @st.save!(@redis)
-
-        @xsd = Nokogiri::XML::Schema(File.new(File.dirname(__FILE__) + "/schemas/cas2.xsd"))
       end
 
       must "issue proxy granting tickets when requested."
@@ -469,20 +457,20 @@ class ServerTest < Test::Unit::TestCase
       context "if it receives a proxy ticket" do
         must "not return a successful validation if it receives a proxy ticket"
 
-        should "have ane error message that explains in the xml that validation failed because a proxy ticket was passed"
+        should "have ane error message that explains in the json that validation failed because a proxy ticket was passed"
       end
 
       # 2.5.1
       context "parameters" do
         must "require 'service and 'ticket' parameter" do
           get "/serviceValidate"
-          assert_invalid_request_xml_response(last_response)
+          assert_invalid_request_json_response(last_response)
 
           get "/serviceValidate", { :service => @test_service_url }
-          assert_invalid_request_xml_response(last_response)
+          assert_invalid_request_json_response(last_response)
 
           get "/serviceValidate", { :ticket => 'ticket' }
-          assert_invalid_request_xml_response(last_response)
+          assert_invalid_request_json_response(last_response)
         end
 
         context "with 'service' and 'ticket' parameters" do
@@ -499,18 +487,18 @@ class ServerTest < Test::Unit::TestCase
       # 2.5.2
       context "response" do
         context "ticket validation success" do
-          should "produce an XML service response" do
+          should "produce an JSON service response" do
             get "/serviceValidate", { :service => @test_service_url, :ticket => @st.ticket }
 
-            assert_authentication_success_xml_response(last_response)
+            assert_authentication_success_json_response(last_response)
           end
         end
 
         context "ticket validation failure" do
-          should "produce an XML service response" do
+          should "produce an JSON service response" do
             get "/serviceValidate", { :service => @test_service_url, :ticket => "ST-FAKE" }
 
-            assert_authenticate_failure_xml_response(last_response)
+            assert_authenticate_failure_json_response(last_response)
           end
         end
       end
@@ -521,14 +509,14 @@ class ServerTest < Test::Unit::TestCase
           should "respond with INVALID_REQUEST" do
             get "/serviceValidate"
 
-            assert_invalid_request_xml_response(last_response)
+            assert_invalid_request_json_response(last_response)
           end
         end
 
         context "ticket provided was not valid or the ticket did not come from an intial login and 'renew' was set" do
           should "respond with INVALID_TICKET" do
             get "/serviceValidate", :service => @test_service_url, :ticket => "ST-FAKE"
-            assert_invalid_ticket_xml_response(last_response)
+            assert_invalid_ticket_json_response(last_response)
           end
         end
 
@@ -536,7 +524,7 @@ class ServerTest < Test::Unit::TestCase
           setup { get "/serviceValidate", :service => "http://example.com", :ticket => @st.ticket }
 
           should "respond with INVALID_SERVICE" do
-            assert_invalid_service_xml_response(last_response)
+            assert_invalid_service_json_response(last_response)
           end
 
           must "invalidate the ticket" do
@@ -560,21 +548,19 @@ class ServerTest < Test::Unit::TestCase
           setup do
             @st = ServiceTicket.new(@test_service_url, "quentin")
             @st.save!(@redis)
-
-            @xsd = Nokogiri::XML::Schema(File.new(File.dirname(__FILE__) + "/schemas/cas2.xsd"))
           end
 
           # 2.5.1 for 2.6
           context "parameters" do
             must "require 'service and 'ticket' parameter" do
               get "/proxyValidate"
-              assert_invalid_request_xml_response(last_response)
+              assert_invalid_request_json_response(last_response)
 
               get "/proxyValidate", { :service => @test_service_url }
-              assert_invalid_request_xml_response(last_response)
+              assert_invalid_request_json_response(last_response)
 
               get "/proxyValidate", { :ticket => "ticket" }
-              assert_invalid_request_xml_response(last_response)
+              assert_invalid_request_json_response(last_response)
             end
 
             context "with 'service' and 'ticket' parameters" do
@@ -591,16 +577,16 @@ class ServerTest < Test::Unit::TestCase
           # 2.5.2 for 2.6
           context "response" do
             context "ticket validation success" do
-              should "produce an XML service response" do
+              should "produce an JSON service response" do
                 get "/proxyValidate", { :service => @test_service_url, :ticket => @st.ticket }
-                assert_authentication_success_xml_response(last_response)
+                assert_authentication_success_json_response(last_response)
               end
             end
 
             context "ticket validation failure" do
-              should "produce an XML service response" do
+              should "produce an JSON service response" do
                 get "/proxyValidate", { :service => @test_service_url, :ticket => "ST-FAKE" }
-                assert_authenticate_failure_xml_response(last_response)
+                assert_authenticate_failure_json_response(last_response)
               end
             end
           end
@@ -611,14 +597,14 @@ class ServerTest < Test::Unit::TestCase
           context "not all of the required request parameters present" do
             should "respond with INVALID_REQUEST" do
               get "/proxyValidate"
-              assert_invalid_request_xml_response(last_response)
+              assert_invalid_request_json_response(last_response)
             end
           end
 
           context "ticket provided was not valid or the ticket did not come from an intial login and 'renew' was set" do
             should "respond with INVALID_TICKET" do
               get "/proxyValidate", :service => @test_service_url, :ticket => "ST-FAKE"
-              assert_invalid_ticket_xml_response(last_response)
+              assert_invalid_ticket_json_response(last_response)
             end
           end
 
@@ -626,7 +612,7 @@ class ServerTest < Test::Unit::TestCase
             setup { get "/proxyValidate", :service => "http://example.com", :ticket => @st.ticket }
 
             should "respond with INVALID_SERVICE" do
-              assert_invalid_service_xml_response(last_response)
+              assert_invalid_service_json_response(last_response)
             end
 
             must "invalidate the ticket" do

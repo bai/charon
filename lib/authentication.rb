@@ -183,7 +183,7 @@ module Authentication
       end
 
       def service_url(service)
-        Addressable::URI.parse(settings.services[service] + "/auth/remote/callback")
+        Addressable::URI.parse(settings.services[service || "account"] + "/auth/remote/callback")
       end
 
       def resp(status, data = nil)
