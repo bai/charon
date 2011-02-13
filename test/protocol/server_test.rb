@@ -25,44 +25,45 @@ class ServerTest < Test::Unit::TestCase
     assert_equal("application/json", last_response.content_type)
     json = Yajl::Parser.parse(last_response.body)
 
-    assert !json["status"].empty?, "Expected authentication failure status code in #{json}"
-    assert json["status"] < 200, "Expected failure status code to be less than 200"
+    # assert !json["status"].empty?, "Expected authentication failure status code in #{json}"
+    # assert json["status"] < 200, "Expected failure status code to be less than 200"
+    assert_equal(102, json["status"])
   end
 
   def assert_authentication_success_json_response(last_response)
     assert_equal("application/json", last_response.content_type)
     json = Yajl::Parser.parse(last_response.body)
 
-    assert !json.xpath("//cas:authenticationSuccess", { "cas" => "http://www.yale.edu/tp/cas" }).empty?, "Expected authenticationSuccess in #{json}"
-    assert_equal("quentin", json.xpath("//cas:user", { "cas" => "http://www.yale.edu/tp/cas" })[0].content)
+    # assert !json["status"].empty?, "Expected authentication success status code in #{json}"
+    assert_equal("quentin", json["data"]["user"])
   end
 
   def assert_invalid_ticket_json_response(last_response)
     assert_equal("application/json", last_response.content_type)
     json = Yajl::Parser.parse(last_response.body)
 
-    assert !json.xpath("//cas:authenticationFailure", { "cas" => "http://www.yale.edu/tp/cas" }).empty?, "Expected authenticationFailure in #{json}"
-    assert_equal("INVALID_TICKET", json.xpath("//cas:authenticationFailure/@code", { "cas" => "http://www.yale.edu/tp/cas" })[0].content)
+    # assert !json["status"].empty?, "Expected authentication failure status code in #{json}"
+    assert_equal(103, json["status"])
   end
 
   def assert_authenticate_failure_json_response(last_response)
     assert_equal("application/json", last_response.content_type)
     json = Yajl::Parser.parse(last_response.body)
 
-    assert !json.xpath("//cas:authenticationFailure", { "cas" => "http://www.yale.edu/tp/cas" }).empty?, "Expected authenticationFailure in #{json}"
+    assert json["status"] < 200, "Expected authentication failure status code in #{json}"
   end
 
   def assert_invalid_service_json_response(last_response)
     assert_equal("application/json", last_response.content_type)
     json = Yajl::Parser.parse(last_response.body)
 
-    assert !json.xpath("//cas:authenticationFailure", { "cas" => "http://www.yale.edu/tp/cas" }).empty?, "Expected authenticationFailure in #{json}"
-    assert_equal("INVALID_SERVICE", json.xpath("//cas:authenticationFailure/@code", { "cas" => "http://www.yale.edu/tp/cas" })[0].content)
+    assert !json["status"].empty?, "Expected authentication failure status code in #{json}"
+    assert_equal(101, json["status"])
   end
 
   context "An authentication server" do
     setup do
-      @test_service_url = "http://example.com?page=foo bar"
+      @test_service_url = "account"
       @redis = Redis.new
       @parser = URI::Parser.new
     end
@@ -87,19 +88,19 @@ class ServerTest < Test::Unit::TestCase
           end
         end
 
-        context "with a 'service' parameter" do
+        context "with a 's' parameter" do
           should "be url-encoded" do
-            get "/serviceLogin?service=#{@parser.escape(@test_service_url)}"
+            get "/serviceLogin?s=#{@parser.escape(@test_service_url)}"
             assert last_response.ok?
 
-            assert_raise(URI::InvalidURIError) { get "/serviceLogin?service=#{@test_service_url}" }
+            assert_raise(URI::InvalidURIError) { get "/serviceLogin?s=#{@test_service_url}" }
           end
 
           context "a single sign-on session already exists" do
             setup { sso_session_for("quentin") }
 
             should "generate a service ticket and redirect to the service" do
-              get "/serviceLogin", { :service => @test_service_url }, "HTTP_COOKIE" => @cookie
+              get "/serviceLogin", { :s => @test_service_url }, "HTTP_COOKIE" => @cookie
 
               assert last_response.redirect?
               assert_equal Addressable::URI.parse(@test_service_url).path,
@@ -107,7 +108,7 @@ class ServerTest < Test::Unit::TestCase
             end
 
             should "persist the ticket for retrieval later" do
-              get "/serviceLogin", { :service => @test_service_url }, "HTTP_COOKIE" => @cookie
+              get "/serviceLogin", { :s => @test_service_url }, "HTTP_COOKIE" => @cookie
               # post "/serviceLogin", @params
               ticket_number = last_response.inspect[/ST-[A-Za-z0-9]+/]
               st = ServiceTicket.find!(ticket_number, @redis)
@@ -119,7 +120,7 @@ class ServerTest < Test::Unit::TestCase
           # Not specified, but good sanity check
           context "an invalid single sign-on session exists" do
             should "not generate a service ticket and rediect" do
-              get "/serviceLogin", { :service => @test_service_url }, "HTTP_COOKIE" => "tgt=TGC-1234567"
+              get "/serviceLogin", { :s => @test_service_url }, "HTTP_COOKIE" => "tgt=TGC-1234567"
 
               assert !last_response.headers["Location"]
             end
@@ -127,7 +128,7 @@ class ServerTest < Test::Unit::TestCase
         end
 
         context "with a 'renew' parameter" do
-          setup { @params = { :renew => true } }
+          setup { @params = { :r => true } }
 
           context "a single sign-on session already exists" do
             setup { sso_session_for("quentin") }
@@ -160,7 +161,7 @@ class ServerTest < Test::Unit::TestCase
           end
 
           context "with a 'service' parameter" do
-            setup { @params[:service] = @test_service_url }
+            setup { @params[:s] = @test_service_url }
 
             must "not ask for credentials" do
               get "/serviceLogin", @params
@@ -222,9 +223,9 @@ class ServerTest < Test::Unit::TestCase
 
         context "with a 'service' parameter" do
           must "include the parameter 'service' in the form" do
-            get "/serviceLogin?service=#{@parser.escape(@test_service_url)}"
+            get "/serviceLogin?s=#{@test_service_url}"
 
-            assert_have_selector "input[name='service']"
+            assert_have_selector "input[name='s']"
             assert field_named("service").value == @test_service_url
           end
         end
@@ -315,7 +316,7 @@ class ServerTest < Test::Unit::TestCase
           context "with a 'service' parameter" do
             setup do
               @service_param_url = @parser.escape(@test_service_url)
-              @params[:service] = @service_param_url
+              @params[:s] = @test_service_url
             end
 
             must "redirect the client to the URL specified by the 'service' parameter" do
