@@ -62,7 +62,7 @@ class ServerTest < Test::Unit::TestCase
 
   context "An authentication server" do
     setup do
-      @test_service_url = "account"
+      @test_service = "account"
       @redis = Redis.new
       @parser = URI::Parser.new
     end
@@ -89,35 +89,35 @@ class ServerTest < Test::Unit::TestCase
 
         context "with a 'service' parameter" do
           should "be url-encoded" do
-            get "/serviceLogin?service=#{@parser.escape(@test_service_url)}"
+            get "/serviceLogin?service=#{@test_service}"
             assert last_response.ok?
 
-            assert_raise(URI::InvalidURIError) { get "/serviceLogin?service=#{@test_service_url}" }
+            assert_raise(URI::InvalidURIError) { get "/serviceLogin?service=#{@test_service}" }
           end
 
           context "a single sign-on session already exists" do
             setup { sso_session_for("quentin") }
 
             should "generate a service ticket and redirect to the service" do
-              get "/serviceLogin", { :service => @test_service_url }, "HTTP_COOKIE" => @cookie
+              get "/serviceLogin", { :service => @test_service }, "HTTP_COOKIE" => @cookie
 
               assert last_response.redirect?
               assert_equal("/auth/remote/callback", Addressable::URI.parse(last_response.headers["Location"]).path)
             end
 
             should "persist the ticket for retrieval later" do
-              get "/serviceLogin", { :service => @test_service_url }, "HTTP_COOKIE" => @cookie
+              get "/serviceLogin", { :service => @test_service }, "HTTP_COOKIE" => @cookie
               ticket_number = last_response.inspect[/ST-[A-Za-z0-9]+/]
               st = ServiceTicket.find!(ticket_number, @redis)
               assert_not_nil st
-              assert st.valid_for_service?(@test_service_url)
+              assert st.valid_for_service?(@test_service)
             end
           end
 
           # Not specified, but good sanity check
           context "an invalid single sign-on session exists" do
             should "not generate a service ticket and rediect" do
-              get "/serviceLogin", { :service => @test_service_url }, "HTTP_COOKIE" => "tgt=TGC-1234567"
+              get "/serviceLogin", { :service => @test_service }, "HTTP_COOKIE" => "tgt=TGC-1234567"
 
               assert !last_response.headers["Location"]
             end
@@ -158,7 +158,7 @@ class ServerTest < Test::Unit::TestCase
           end
 
           context "with a 'service' parameter" do
-            setup { @params[:service] = @test_service_url }
+            setup { @params[:service] = @test_service }
 
             must "not ask for credentials" do
               get "/serviceLogin", @params
@@ -171,7 +171,7 @@ class ServerTest < Test::Unit::TestCase
             must "redirect the client to the service URL without a ticket" do
               get "/serviceLogin", @params
 
-              assert_equal(@test_service_url, last_response.headers["Location"])
+              assert_equal("http://127.0.0.1:3000/auth/remote/callback", last_response.headers["Location"])
             end
 
             context "a single sign-on session already exists" do
@@ -189,7 +189,7 @@ class ServerTest < Test::Unit::TestCase
                 ticket_number = last_response.inspect[/ST-[A-Za-z0-9]+/]
                 st = ServiceTicket.find!(ticket_number, @redis)
                 assert_not_nil st
-                assert st.valid_for_service?(@test_service_url)
+                assert st.valid_for_service?(@test_service)
               end
 
               may "interpose an advisory page informing the client that an authentication has taken place"
@@ -217,10 +217,10 @@ class ServerTest < Test::Unit::TestCase
 
         context "with a 'service' parameter" do
           must "include the parameter 'service' in the form" do
-            get "/serviceLogin?service=#{@test_service_url}"
+            get "/serviceLogin?service=#{@test_service}"
 
             assert_have_selector "input[name='service']"
-            assert field_named("service").value == @test_service_url
+            assert field_named("service").value == @test_service
           end
         end
 
@@ -309,7 +309,7 @@ class ServerTest < Test::Unit::TestCase
           context "with a 'service' parameter" do
             setup do
               @service_param_url = /auth\/remote\/callback/ # FIXME: regex is not obvious
-              @params[:service] = @test_service_url
+              @params[:service] = @test_service
             end
 
             must "redirect the client to the URL specified by the 'service' parameter" do
@@ -442,7 +442,7 @@ class ServerTest < Test::Unit::TestCase
     # 2.5
     context "/serviceValidate" do
       setup do
-        @st = ServiceTicket.new(@test_service_url, "quentin")
+        @st = ServiceTicket.new(@test_service, "quentin")
         @st.save!(@redis)
       end
 
@@ -460,7 +460,7 @@ class ServerTest < Test::Unit::TestCase
           get "/serviceValidate"
           assert_invalid_request_json_response(last_response)
 
-          get "/serviceValidate", { :service => @test_service_url }
+          get "/serviceValidate", { :service => @test_service }
           assert_invalid_request_json_response(last_response)
 
           get "/serviceValidate", { :ticket => 'ticket' }
@@ -482,7 +482,7 @@ class ServerTest < Test::Unit::TestCase
       context "response" do
         context "ticket validation success" do
           should "produce an JSON service response" do
-            get "/serviceValidate", { :service => @test_service_url, :ticket => @st.ticket }
+            get "/serviceValidate", { :service => @test_service, :ticket => @st.ticket }
 
             assert_authentication_success_json_response(last_response)
           end
@@ -490,7 +490,7 @@ class ServerTest < Test::Unit::TestCase
 
         context "ticket validation failure" do
           should "produce an JSON service response" do
-            get "/serviceValidate", { :service => @test_service_url, :ticket => "ST-FAKE" }
+            get "/serviceValidate", { :service => @test_service, :ticket => "ST-FAKE" }
 
             assert_authenticate_failure_json_response(last_response)
           end
@@ -509,13 +509,13 @@ class ServerTest < Test::Unit::TestCase
 
         context "ticket provided was not valid or the ticket did not come from an intial login and 'renew' was set" do
           should "respond with INVALID_TICKET" do
-            get "/serviceValidate", :service => @test_service_url, :ticket => "ST-FAKE"
+            get "/serviceValidate", :service => @test_service, :ticket => "ST-FAKE"
             assert_invalid_ticket_json_response(last_response)
           end
         end
 
         context "the ticket provided was valid, but the service specified did not match the service associated with the ticket" do
-          setup { get "/serviceValidate", :service => "http://example.com", :ticket => @st.ticket }
+          setup { get "/serviceValidate", :service => "pipeline", :ticket => @st.ticket }
 
           should "respond with INVALID_SERVICE" do
             assert_invalid_service_json_response(last_response)
@@ -540,7 +540,7 @@ class ServerTest < Test::Unit::TestCase
       context "/proxyValidate" do
         context "performing the same validation tasks as /serviceValidate" do
           setup do
-            @st = ServiceTicket.new(@test_service_url, "quentin")
+            @st = ServiceTicket.new(@test_service, "quentin")
             @st.save!(@redis)
           end
 
@@ -550,7 +550,7 @@ class ServerTest < Test::Unit::TestCase
               get "/proxyValidate"
               assert_invalid_request_json_response(last_response)
 
-              get "/proxyValidate", { :service => @test_service_url }
+              get "/proxyValidate", { :service => @test_service }
               assert_invalid_request_json_response(last_response)
 
               get "/proxyValidate", { :ticket => "ticket" }
@@ -572,14 +572,14 @@ class ServerTest < Test::Unit::TestCase
           context "response" do
             context "ticket validation success" do
               should "produce an JSON service response" do
-                get "/proxyValidate", { :service => @test_service_url, :ticket => @st.ticket }
+                get "/proxyValidate", { :service => @test_service, :ticket => @st.ticket }
                 assert_authentication_success_json_response(last_response)
               end
             end
 
             context "ticket validation failure" do
               should "produce an JSON service response" do
-                get "/proxyValidate", { :service => @test_service_url, :ticket => "ST-FAKE" }
+                get "/proxyValidate", { :service => @test_service, :ticket => "ST-FAKE" }
                 assert_authenticate_failure_json_response(last_response)
               end
             end
@@ -597,13 +597,13 @@ class ServerTest < Test::Unit::TestCase
 
           context "ticket provided was not valid or the ticket did not come from an intial login and 'renew' was set" do
             should "respond with INVALID_TICKET" do
-              get "/proxyValidate", :service => @test_service_url, :ticket => "ST-FAKE"
+              get "/proxyValidate", :service => @test_service, :ticket => "ST-FAKE"
               assert_invalid_ticket_json_response(last_response)
             end
           end
 
           context "the ticket provided was valid, but the service specified did not match the service associated with the ticket" do
-            setup { get "/proxyValidate", :service => "http://example.com", :ticket => @st.ticket }
+            setup { get "/proxyValidate", :service => "pipeline", :ticket => @st.ticket }
 
             should "respond with INVALID_SERVICE" do
               assert_invalid_service_json_response(last_response)
@@ -628,19 +628,19 @@ class ServerTest < Test::Unit::TestCase
     # 3.1
     context "service ticket" do
       setup do
-        @st = ServiceTicket.new(@test_service_url, "quentin")
+        @st = ServiceTicket.new(@test_service, "quentin")
         @st.save!(@redis)
       end
 
       # 3.1.1
       context "properties" do
         should "be valid only for the service that was specified to /serviceLogin when they were generated" do
-          assert @st.valid_for_service?(@test_service_url)
+          assert @st.valid_for_service?(@test_service)
           assert !@st.valid_for_service?("http://google.com")
         end
 
         should "not include the service identifier in the service ticket" do
-          assert !@st.ticket.include?(@test_service_url)
+          assert !@st.ticket.include?(@test_service)
         end
 
         must "be valid for only one attempt" do
@@ -668,19 +668,19 @@ class ServerTest < Test::Unit::TestCase
     # 3.2
     context "proxy ticket" do
       setup do
-        @pt = ProxyTicket.new(@test_service_url)
+        @pt = ProxyTicket.new(@test_service)
         @pt.save!(@redis)
       end
 
       # 3.2.1
       context "properties" do
         should "be valid only for the service that was specified to /proxy when they were generated" do
-          assert @pt.valid_for_service?(@test_service_url)
+          assert @pt.valid_for_service?(@test_service)
           assert !@pt.valid_for_service?("http://google.com")
         end
 
         should "not include the service identifier in the proxy ticket" do
-          assert !@pt.ticket.include?(@test_service_url)
+          assert !@pt.ticket.include?(@test_service)
         end
 
         must "be valid for only one attempt" do
@@ -712,7 +712,7 @@ class ServerTest < Test::Unit::TestCase
     # 3.3
     context "proxy-granting ticket" do
       setup do
-        @pgt = ProxyGrantingTicket.new(@test_service_url)
+        @pgt = ProxyGrantingTicket.new(@test_service)
         @pgt.save!(@redis)
       end
 
@@ -786,7 +786,7 @@ class ServerTest < Test::Unit::TestCase
       setup do
         @tickets = [
           LoginTicket.new,
-          ServiceTicket.new("http://example.com", "foo"),
+          ServiceTicket.new("account", "foo"),
           TicketGrantingTicket.new("foo")
         ]
       end
