@@ -57,7 +57,6 @@ class ServerTest < Test::Unit::TestCase
     assert_equal("application/json", last_response.content_type)
     json = Yajl::Parser.parse(last_response.body)
 
-    # assert !json["status"].empty?, "Expected authentication failure status code in #{json}"
     assert_equal(101, json["status"])
   end
 
@@ -88,29 +87,26 @@ class ServerTest < Test::Unit::TestCase
           end
         end
 
-        context "with a 's' parameter" do
+        context "with a 'service' parameter" do
           should "be url-encoded" do
-            get "/serviceLogin?s=#{@parser.escape(@test_service_url)}"
+            get "/serviceLogin?service=#{@parser.escape(@test_service_url)}"
             assert last_response.ok?
 
-            assert_raise(URI::InvalidURIError) { get "/serviceLogin?s=#{@test_service_url}" }
+            assert_raise(URI::InvalidURIError) { get "/serviceLogin?service=#{@test_service_url}" }
           end
 
           context "a single sign-on session already exists" do
             setup { sso_session_for("quentin") }
 
             should "generate a service ticket and redirect to the service" do
-              get "/serviceLogin", { :s => @test_service_url }, "HTTP_COOKIE" => @cookie
+              get "/serviceLogin", { :service => @test_service_url }, "HTTP_COOKIE" => @cookie
 
               assert last_response.redirect?
-              # assert_equal Addressable::URI.parse(@test_service_url).path,
-              #   Addressable::URI.parse(last_response.headers["Location"]).path
               assert_equal("/auth/remote/callback", Addressable::URI.parse(last_response.headers["Location"]).path)
             end
 
             should "persist the ticket for retrieval later" do
-              get "/serviceLogin", { :s => @test_service_url }, "HTTP_COOKIE" => @cookie
-              # post "/serviceLogin", @params
+              get "/serviceLogin", { :service => @test_service_url }, "HTTP_COOKIE" => @cookie
               ticket_number = last_response.inspect[/ST-[A-Za-z0-9]+/]
               st = ServiceTicket.find!(ticket_number, @redis)
               assert_not_nil st
@@ -121,7 +117,7 @@ class ServerTest < Test::Unit::TestCase
           # Not specified, but good sanity check
           context "an invalid single sign-on session exists" do
             should "not generate a service ticket and rediect" do
-              get "/serviceLogin", { :s => @test_service_url }, "HTTP_COOKIE" => "tgt=TGC-1234567"
+              get "/serviceLogin", { :service => @test_service_url }, "HTTP_COOKIE" => "tgt=TGC-1234567"
 
               assert !last_response.headers["Location"]
             end
@@ -129,7 +125,7 @@ class ServerTest < Test::Unit::TestCase
         end
 
         context "with a 'renew' parameter" do
-          setup { @params = { :r => true } }
+          setup { @params = { :renew => true } }
 
           context "a single sign-on session already exists" do
             setup { sso_session_for("quentin") }
@@ -162,7 +158,7 @@ class ServerTest < Test::Unit::TestCase
           end
 
           context "with a 'service' parameter" do
-            setup { @params[:s] = @test_service_url }
+            setup { @params[:service] = @test_service_url }
 
             must "not ask for credentials" do
               get "/serviceLogin", @params
@@ -185,14 +181,11 @@ class ServerTest < Test::Unit::TestCase
                 get "/serviceLogin", @params, "HTTP_COOKIE" => @cookie
 
                 assert last_response.redirect?
-                # assert_equal Addressable::URI.parse(@test_service_url).path,
-                #   Addressable::URI.parse(last_response.headers["Location"]).path
                 assert_equal("/auth/remote/callback", Addressable::URI.parse(last_response.headers["Location"]).path)
               end
 
               should "persist the ticket for retrieval later" do
                 get "/serviceLogin", @params, "HTTP_COOKIE" => @cookie
-                # post "/serviceLogin", @params
                 ticket_number = last_response.inspect[/ST-[A-Za-z0-9]+/]
                 st = ServiceTicket.find!(ticket_number, @redis)
                 assert_not_nil st
@@ -224,10 +217,10 @@ class ServerTest < Test::Unit::TestCase
 
         context "with a 'service' parameter" do
           must "include the parameter 'service' in the form" do
-            get "/serviceLogin?s=#{@test_service_url}"
+            get "/serviceLogin?service=#{@test_service_url}"
 
-            assert_have_selector "input[name='s']"
-            assert field_named("s").value == @test_service_url
+            assert_have_selector "input[name='service']"
+            assert field_named("service").value == @test_service_url
           end
         end
 
@@ -316,7 +309,7 @@ class ServerTest < Test::Unit::TestCase
           context "with a 'service' parameter" do
             setup do
               @service_param_url = /auth\/remote\/callback/ # FIXME: regex is not obvious
-              @params[:s] = @test_service_url
+              @params[:service] = @test_service_url
             end
 
             must "redirect the client to the URL specified by the 'service' parameter" do
@@ -338,7 +331,7 @@ class ServerTest < Test::Unit::TestCase
 
             must "include a valid service ticket, passed as the HTTP request parameter, 'ticket' with request" do
               post "/serviceLogin", @params
-              assert_match(/t/, last_response.inspect) # FIXME: too generic
+              assert_match(/ticket/, last_response.inspect)
               assert_match(/ST-[0-9]+/, last_response.inspect)
             end
 

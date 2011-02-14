@@ -53,10 +53,10 @@ module Authentication
     end
 
     get "/serviceLogin" do
-      @service = params[:s]
+      @service = params[:service]
       @service_url = service_url(@service)
-      @renew = [ true, "true", "1", 1 ].include?(params[:r])
-      @gateway = [ true, "true", "1", 1 ].include?(params[:g])
+      @renew = [ true, "true", "1", 1 ].include?(params[:renew])
+      @gateway = [ true, "true", "1", 1 ].include?(params[:gateway])
 
       if @renew
         @login_ticket = LoginTicket.create!(settings.redis)
@@ -68,9 +68,9 @@ module Authentication
             st.save!(settings.redis)
             redirect_url = @service_url.clone
             if @service_url.query_values.nil?
-              redirect_url.query_values = @service_url.query_values = { :t => st.ticket }
+              redirect_url.query_values = @service_url.query_values = { :ticket => st.ticket }
             else
-              redirect_url.query_values = @service_url.query_values.merge(:t => st.ticket)
+              redirect_url.query_values = @service_url.query_values.merge(:ticket => st.ticket)
             end
             redirect redirect_url.to_s, 303
           else
@@ -87,9 +87,9 @@ module Authentication
             st.save!(settings.redis)
             redirect_url = @service_url.clone
             if @service_url.query_values.nil?
-              redirect_url.query_values = @service_url.query_values = { :t => st.ticket }
+              redirect_url.query_values = @service_url.query_values = { :ticket => st.ticket }
             else
-              redirect_url.query_values = @service_url.query_values.merge(:t => st.ticket)
+              redirect_url.query_values = @service_url.query_values.merge(:ticket => st.ticket)
             end
             redirect redirect_url.to_s, 303
           else
@@ -105,12 +105,10 @@ module Authentication
     post "/serviceLogin" do
       username = params[:username]
       password = params[:password]
-      service  = params[:s]
-
-      # raise [ username, password, service, login_ticket ].inspect
+      service  = params[:service]
 
       # Redirecting to credential requestor if we don't have these params
-      # redirect "/serviceLogin" + "?s=account", 303 unless username && password && service && login_ticket
+      # redirect "/serviceLogin" + "?service=account", 303 unless username && password && service && login_ticket
       # Failures will throw back to self, which we've registered with Warden to handle login failures
       warden.authenticate!(:scope => :remote, :action => "unauthenticated")
 
@@ -122,14 +120,14 @@ module Authentication
       if service_url(service)
         st = ServiceTicket.new(service, username)
         st.save!(settings.redis)
-        redirect service_url(service) + "?t=#{st.ticket}", 303
+        redirect service_url(service) + "?ticket=#{st.ticket}", 303
       else
         erb(:logged_in)
       end
     end
 
     get %r{(proxy|service)Validate} do
-      service, ticket = params[:s], params[:t]
+      service, ticket = params[:service], params[:ticket]
 
       result = if service_url(service) && ticket
         if service_ticket
@@ -179,7 +177,7 @@ module Authentication
       end
 
       def service_ticket
-        @service_ticket ||= ServiceTicket.find!(params[:t], settings.redis)
+        @service_ticket ||= ServiceTicket.find!(params[:ticket], settings.redis)
       end
 
       def service_url(service)

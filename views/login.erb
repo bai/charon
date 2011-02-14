@@ -11,7 +11,7 @@
   </div>
   <input name="lt" type="hidden" value="<%= @login_ticket.ticket %>">
   <% if @service %>
-    <input name="s" type="hidden" value="<%= @service %>">
+    <input name="service" type="hidden" value="<%= @service %>">
   <% end %>
   <div class="actions">
     <input type="submit" value="<%= t("login_button") %>">
