@@ -120,7 +120,7 @@ module Authentication
       if service_url(service)
         st = ServiceTicket.new(service, username)
         st.save!(settings.redis)
-        redirect service_url(service) + "?ticket=#{st.ticket}", 303
+        redirect service_url(service).to_s + "?ticket=#{st.ticket}", 303
       else
         erb(:logged_in)
       end
