@@ -361,22 +361,29 @@ class ServerTest < Test::Unit::TestCase
         end
 
         context "with failure" do
-          should "return to /serviceLogin as a credential requester" do
-            post "/serviceLogin"
+          setup do
+            @params = { :username => "test", :password => "badpassword", :lt => @lt.ticket, :service => 'account' }
+            post "/serviceLogin", @params
+          end
 
-            # Don't care if it's a redirect or not
-            # follow_redirect!
+          should "redirect to /unauthorized but render /serviceLogin" do
+            assert last_response.redirect?
+            follow_redirect!
 
             assert_have_selector "input[name='username']"
             assert_have_selector "input[name='password']"
             assert_have_selector "input[name='lt']"
           end
 
+          should "preserve the service url in a hidden field" do
+            assert last_response.redirect?
+            follow_redirect!
+            assert_have_selector "input[name='service']", :value => 'account'
+          end
+
           # RECOMMENDED
           # Will implement with some kind of flash message
           # should "display an error message describing why login failed" do
-          #   @params = { :username => "test", :password => "badpassword", :lt => @lt.ticket }
-          #   post "/serviceLogin", @params
           #   assert_match(/Login was not successful/, last_response.body)
           # end
 

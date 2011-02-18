@@ -158,11 +158,6 @@ module Authentication
       erb(:login)
     end
 
-    post "/unauthenticated" do
-      @login_ticket = LoginTicket.create!(settings.redis)
-      erb(:login)
-    end
-
     private
       def warden
         request.env["warden"]
