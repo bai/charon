@@ -1,14 +1,12 @@
 module Authentication
   module Strategies
     class Base < Warden::Strategies::Base
-      alias :old_fail! :fail!
-      alias :old_fail :fail
-
       def valid?
         params["username"] && params["password"]
       end
+
       def fail!(message = "Failed to Login")
-        old_fail!
+        fail!
         redirect_to_login_with_service_url
       end
 
@@ -18,7 +16,7 @@ module Authentication
       #
       # :api: public
       def fail(message = "Failed to Login")
-        old_fail
+        super
         redirect_to_login_with_service_url
       end
 

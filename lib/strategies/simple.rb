@@ -8,7 +8,7 @@ module Authentication
           u = User.new(params["username"], params["password"])
           success!(u)
         else
-          fail!("Could not log in")
+          fail!
         end
       end
     end
