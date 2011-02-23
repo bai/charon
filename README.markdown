@@ -1,4 +1,4 @@
-# Charon
+# Charon ![Build status](http://travis-ci.org/bai/charon.png)
 
 Authentication server.
 
