@@ -35,7 +35,7 @@ class ServerTest < Test::Unit::TestCase
     json = Yajl::Parser.parse(last_response.body)
 
     # assert !json["status"].empty?, "Expected authentication success status code in #{json}"
-    assert_equal("quentin", json["data"]["user_info"]["name"])
+    assert_equal("quentin", json["data"]["name"])
   end
 
   def assert_invalid_ticket_json_response(last_response)
