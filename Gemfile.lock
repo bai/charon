@@ -1,0 +1,47 @@
+GIT
+  remote: git://github.com/bai/crypt-isaac.git
+  revision: 091ff8f6ddbb3df205b1a75efcc6cb6d7785c3b8
+  specs:
+    crypt-isaac (0.9.3)
+
+GEM
+  remote: http://rubygems.org/
+  specs:
+    addressable (2.2.4)
+    i18n (0.5.0)
+    nokogiri (1.4.4)
+    rack (1.2.2)
+    rack-test (0.5.7)
+      rack (>= 1.0)
+    redis (2.1.1)
+    shotgun (0.9)
+      rack (>= 1.0)
+    shoulda (2.11.3)
+    sinatra (1.2.1)
+      rack (~> 1.1)
+      tilt (>= 1.2.2, < 2.0)
+    tilt (1.2.2)
+    warden (1.0.3)
+      rack (>= 1.0.0)
+    webrat (0.7.3)
+      nokogiri (>= 1.2.0)
+      rack (>= 1.0)
+      rack-test (>= 0.5.3)
+    yajl-ruby (0.8.2)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  addressable
+  crypt-isaac!
+  i18n
+  rack
+  rack-test
+  redis
+  shotgun
+  shoulda
+  sinatra
+  warden
+  webrat
+  yajl-ruby
