@@ -6,7 +6,7 @@ module Authentication
       end
 
       def fail!(message = "Failed to Login")
-        fail!
+        super
         redirect_to_login_with_service_url
       end
 
