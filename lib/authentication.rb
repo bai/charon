@@ -131,7 +131,7 @@ module Authentication
       result = if service_url(service) && ticket
         if service_ticket
           if service_ticket.valid_for_service?(service)
-            [ settings.error_codes["OK"], { "username" => service_ticket.username } ]
+            [ settings.error_codes["OK"], { "name" => service_ticket.username } ]
           else
             [ settings.error_codes["INVALID_SERVICE"] ]
           end
