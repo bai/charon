@@ -25,8 +25,6 @@ class ServerTest < Test::Unit::TestCase
     assert_equal("application/json", last_response.content_type)
     json = Yajl::Parser.parse(last_response.body)
 
-    # assert !json["status"].empty?, "Expected authentication failure status code in #{json}"
-    # assert json["status"] < 200, "Expected failure status code to be less than 200"
     assert_equal(102, json["status"])
   end
 
@@ -34,7 +32,6 @@ class ServerTest < Test::Unit::TestCase
     assert_equal("application/json", last_response.content_type)
     json = Yajl::Parser.parse(last_response.body)
 
-    # assert !json["status"].empty?, "Expected authentication success status code in #{json}"
     assert_equal("quentin", json["data"]["name"])
   end
 
@@ -42,7 +39,6 @@ class ServerTest < Test::Unit::TestCase
     assert_equal("application/json", last_response.content_type)
     json = Yajl::Parser.parse(last_response.body)
 
-    # assert !json["status"].empty?, "Expected authentication failure status code in #{json}"
     assert_equal(103, json["status"])
   end
 
@@ -67,9 +63,7 @@ class ServerTest < Test::Unit::TestCase
       @parser = URI::Parser.new
     end
 
-    # 2.1
     context "/serviceLogin as credential requestor" do
-      # 2.1.1
       context "parameters" do
         should "request credentials" do
           get "/serviceLogin"
@@ -88,13 +82,6 @@ class ServerTest < Test::Unit::TestCase
         # end
 
         context "with a 'service' parameter" do
-          # should "be url-encoded" do
-          #   get "/serviceLogin?service=#{@test_service}"
-          #   assert last_response.ok?
-          #
-          #   assert_raise(URI::InvalidURIError) { get "/serviceLogin?service=#{@test_service}" }
-          # end
-
           context "a single sign-on session already exists" do
             setup { sso_session_for("quentin") }
 
@@ -148,15 +135,6 @@ class ServerTest < Test::Unit::TestCase
         context "with a 'gateway' parameter" do
           setup { @params = { :gateway => true } }
 
-          # RECOMMENDED
-          # should "request credentials as though neither 'gateway' or 'service' were set" do
-          #   get "/serviceLogin", @params
-          #
-          #   assert_have_selector "input[name='username']"
-          #   assert_have_selector "input[name='password']"
-          #   assert_have_selector "input[name='lt']"
-          # end
-
           context "with a 'service' parameter" do
             setup { @params[:service] = @test_service }
 
@@ -198,7 +176,6 @@ class ServerTest < Test::Unit::TestCase
         end
       end
 
-      # 2.1.3
       context "response for username/password authentication" do
         must "include a form with the parameters, 'username', 'password', and 'lt'" do
           get "/serviceLogin"
@@ -208,12 +185,6 @@ class ServerTest < Test::Unit::TestCase
           assert_have_selector "input[name='lt']"
           assert_match("LT-", last_response.body)
         end
-
-        # may "include the parameter 'warn' in the form" do
-        #   get "/serviceLogin"
-        #
-        #   assert_have_selector "input[name='warn']"
-        # end
 
         context "with a 'service' parameter" do
           must "include the parameter 'service' in the form" do
@@ -237,41 +208,30 @@ class ServerTest < Test::Unit::TestCase
         end
       end
 
-      # 2.1.4
       context "response for trust authentication" do
         # TODO
       end
 
-      # 2.1.5
       context "response for single sign-on authentication" do
         context "a single sign-on session already exists" do
-          # I think this was already covered in 2.1.1
+          # I think this was already covered
           context "with a 'renew' parameter" do
-            # As 2.1.3 or 2.1.4
           end
         end
       end
     end
 
-    # 2.2
     context "/serviceLogin as credential acceptor" do
       setup do
         @lt = LoginTicket.create!(@redis)
       end
 
-      # 2.2.1
-      # Tests in 2.2.4
       context "parameters common to all types of authentication" do
         context "with a 'service' parameter" do
           must "redirect the client to the 'service' url"
         end
-
-        # context "with a 'warn' parameter" do
-        #   must "prompt the client before authenticating on another service"
-        # end
       end
 
-      # 2.2.2
       context "parameters for username/password authentication" do
         must "require 'username', 'password', and 'lt' (login ticket) parameters" do
           post "/serviceLogin"
@@ -288,12 +248,10 @@ class ServerTest < Test::Unit::TestCase
         end
       end
 
-      # 2.2.3
       context "parameters for trust verification" do
         # TODO
       end
 
-      # 2.2.4
       context "response" do
         context "successful login:" do
           setup { @params = { :username => "test", :password => "password", :lt => @lt.ticket } }
@@ -332,16 +290,6 @@ class ServerTest < Test::Unit::TestCase
               assert_match(/ST-[0-9]+/, last_response.inspect)
             end
 
-            # 2.2.1 again
-            # context "with a 'warn' parameter" do
-            #   setup { @params[:warn] = "true" }
-            #
-            #   must "prompt the client before authenticating to another service" do
-            #     post "/serviceLogin", @params
-            #     assert !last_response.redirect?
-            #   end
-            # end
-
             should "persist the ticket for retrieval later" do
               post "/serviceLogin", @params
               ticket_number = last_response.inspect[/ST-[A-Za-z0-9]+/]
@@ -350,12 +298,6 @@ class ServerTest < Test::Unit::TestCase
               assert st.valid_for_service?(@params[:service])
             end
           end
-
-          # TODO: We do not currently show this message
-          # must "display a message notifying the client that it has successfully initiated a single sign-on session" do
-          #   post "/serviceLogin", @params
-          #   assert !last_response.redirect?
-          # end
         end
 
         context "with failure" do
@@ -379,20 +321,11 @@ class ServerTest < Test::Unit::TestCase
             assert_have_selector "input[name='service']", :value => 'account'
           end
 
-          # RECOMMENDED
-          # Will implement with some kind of flash message
-          # should "display an error message describing why login failed" do
-          #   assert_match(/Login was not successful/, last_response.body)
-          # end
-
-          # RECOMMENDED
           should "provide an opportunity to attempt to login again"
-          # As "return to /serviceLogin as a credential requester"
         end
       end
     end
 
-    # 2.3
     context "/serviceLogout" do
       setup { sso_session_for("quentin") }
 
@@ -402,13 +335,6 @@ class ServerTest < Test::Unit::TestCase
         assert_nil TicketGrantingTicket.validate(@tgt.ticket, @redis)
       end
 
-      # not in protocol but inferred
-      # should "display a flash message to the user stating they are logged out" do
-      #   get "/serviceLogout", "","HTTP_COOKIE" => @cookie
-      #   assert_match(/You have successfully logged out/, last_response.body)
-      # end
-
-      # not in protocol but inferred
       should "show login page" do
         get "/serviceLogout", "","HTTP_COOKIE" => @cookie
         assert_have_selector "input[name='username']"
@@ -420,31 +346,18 @@ class ServerTest < Test::Unit::TestCase
           get "/serviceLogout", { :url => "http://myreturn.app" },"HTTP_COOKIE" => @cookie
         end
 
-        # must "display a page stating the user has been logged out" do
-        #   msg = "The application you just logged out of has provided a link it would like you to follow."
-        #   assert_match msg, last_response.body
-        # end
-
-        # should "provide a link to the provided URL" do
-        #   msg = "Please <a href=\"http://myreturn.app\">click here</a> to access <a href=\"http://myreturn.app\">http://myreturn.app</a>"
-        #   assert_match msg, last_response.body
-        # end
+        should "reditect a user to the provided URL"
       end
 
-      # 2.3.3
       context "response" do
         must "display a page stating that user has been logged out"
 
-        # 2.3.1
         context "with a 'url' parameter" do
           may "link back to 'url' on the logout page"
         end
       end
     end
 
-    # 2.4 [CAS 1.0: Skipped]
-
-    # 2.5
     context "/serviceValidate" do
       setup do
         @st = ServiceTicket.new(@test_service, "quentin")
@@ -459,7 +372,6 @@ class ServerTest < Test::Unit::TestCase
         should "have ane error message that explains in the json that validation failed because a proxy ticket was passed"
       end
 
-      # 2.5.1
       context "parameters" do
         must "require 'service' and 'ticket' parameters" do
           get "/serviceValidate"
@@ -483,7 +395,6 @@ class ServerTest < Test::Unit::TestCase
         end
       end
 
-      # 2.5.2
       context "response" do
         context "ticket validation success" do
           should "produce an JSON service response" do
@@ -502,7 +413,6 @@ class ServerTest < Test::Unit::TestCase
         end
       end
 
-      # 2.5.3
       context "error codes" do
         context "not all of the required request parameters present" do
           should "respond with INVALID_REQUEST" do
@@ -536,12 +446,10 @@ class ServerTest < Test::Unit::TestCase
         end
       end
 
-      # 2.5.4
       context "proxy callback" do
         # TODO
       end
 
-      # 2.6
       context "/proxyValidate" do
         context "performing the same validation tasks as /serviceValidate" do
           setup do
@@ -549,7 +457,6 @@ class ServerTest < Test::Unit::TestCase
             @st.save!(@redis)
           end
 
-          # 2.5.1 for 2.6
           context "parameters" do
             must "require 'service' and 'ticket' parameters" do
               get "/proxyValidate"
@@ -573,7 +480,6 @@ class ServerTest < Test::Unit::TestCase
             end
           end
 
-          # 2.5.2 for 2.6
           context "response" do
             context "ticket validation success" do
               should "produce an JSON service response" do
@@ -591,7 +497,6 @@ class ServerTest < Test::Unit::TestCase
           end
         end
 
-        # 2.5.3 for 2.6
         context "error codes" do
           context "not all of the required request parameters present" do
             should "respond with INVALID_REQUEST" do
@@ -630,14 +535,12 @@ class ServerTest < Test::Unit::TestCase
       end
     end
 
-    # 3.1
     context "service ticket" do
       setup do
         @st = ServiceTicket.new(@test_service, "quentin")
         @st.save!(@redis)
       end
 
-      # 3.1.1
       context "properties" do
         should "be valid only for the service that was specified to /serviceLogin when they were generated" do
           assert @st.valid_for_service?(@test_service)
@@ -670,14 +573,12 @@ class ServerTest < Test::Unit::TestCase
       end
     end
 
-    # 3.2
     context "proxy ticket" do
       setup do
         @pt = ProxyTicket.new(@test_service)
         @pt.save!(@redis)
       end
 
-      # 3.2.1
       context "properties" do
         should "be valid only for the service that was specified to /proxy when they were generated" do
           assert @pt.valid_for_service?(@test_service)
@@ -714,14 +615,12 @@ class ServerTest < Test::Unit::TestCase
       end
     end
 
-    # 3.3
     context "proxy-granting ticket" do
       setup do
         @pgt = ProxyGrantingTicket.new(@test_service)
         @pgt.save!(@redis)
       end
 
-      # 3.3.1
       context "properties" do
         may "be able to be used by services to obtain multiple proxy tickets"
 
@@ -737,14 +636,12 @@ class ServerTest < Test::Unit::TestCase
       end
     end
 
-    # 3.5
     context "login ticket" do
       setup do
         @lt = LoginTicket.new
         @lt.save!(@redis)
       end
 
-      # 3.5.1
       context "properties" do
         must "be probablistically unique"
 
@@ -759,14 +656,12 @@ class ServerTest < Test::Unit::TestCase
       end
     end
 
-    # 3.6
     context "ticket-granting cookie" do
       setup do
         @tgt = TicketGrantingTicket.new("quentin")
         @tgt.save!(@redis)
       end
 
-      # 3.6.1
       context "properties" do
         must "be set to expire at the end of the client's browser session" do
           cookie_args = @tgt.to_cookie("http://localhost", "/cas")
@@ -786,7 +681,6 @@ class ServerTest < Test::Unit::TestCase
       end
     end
 
-    # 3.7
     context "ticket and ticket-granting cookie character set" do
       setup do
         @tickets = [
