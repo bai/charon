@@ -44,8 +44,8 @@ module Authentication
     use Rack::Session::Cookie
     use Warden::Manager do |manager|
       manager.failure_app = self
-      manager.default_scope = :remote
-      manager.scope_defaults(:remote, :strategies => [ :simple ], :action => "login")
+      manager.default_scope = :charon
+      manager.scope_defaults(:charon, :strategies => [ :simple ], :action => "login")
     end
 
     before do
@@ -110,7 +110,7 @@ module Authentication
       # Redirecting to credential requestor if we don't have these params
       # redirect "/serviceLogin" + "?service=account", 303 unless username && password && service && login_ticket
       # Failures will throw back to self, which we've registered with Warden to handle login failures
-      warden.authenticate!(:scope => :remote, :action => "unauthenticated")
+      warden.authenticate!(:scope => :charon, :action => "unauthenticated")
 
       tgt = TicketGrantingTicket.create!(username, settings.redis)
       cookie = tgt.to_cookie(request.host)
@@ -151,7 +151,7 @@ module Authentication
       if ticket_granting_ticket
         @ticket_granting_ticket.destroy!(settings.redis)
         response.delete_cookie(*ticket_granting_ticket.to_cookie(request.host))
-        warden.logout(:remote)
+        warden.logout(:charon)
       end
       @login_ticket = LoginTicket.create!(settings.redis)
       erb(:login)
@@ -175,7 +175,7 @@ module Authentication
       end
 
       def service_url(service)
-        Addressable::URI.parse(settings.services[service || "account"] + "/auth/remote/callback")
+        Addressable::URI.parse(settings.services[service || "account"] + "/auth/charon/callback")
       end
 
       def resp(status, data = nil)

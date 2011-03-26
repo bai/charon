@@ -102,7 +102,7 @@ class ServerTest < Test::Unit::TestCase
               get "/serviceLogin", { :service => @test_service }, "HTTP_COOKIE" => @cookie
 
               assert last_response.redirect?
-              assert_equal("/auth/remote/callback", Addressable::URI.parse(last_response.headers["Location"]).path)
+              assert_equal("/auth/charon/callback", Addressable::URI.parse(last_response.headers["Location"]).path)
             end
 
             should "persist the ticket for retrieval later" do
@@ -171,7 +171,7 @@ class ServerTest < Test::Unit::TestCase
             must "redirect the client to the service URL without a ticket" do
               get "/serviceLogin", @params
 
-              assert_equal("http://127.0.0.1:3000/auth/remote/callback", last_response.headers["Location"])
+              assert_equal("http://127.0.0.1:3000/auth/charon/callback", last_response.headers["Location"])
             end
 
             context "a single sign-on session already exists" do
@@ -181,7 +181,7 @@ class ServerTest < Test::Unit::TestCase
                 get "/serviceLogin", @params, "HTTP_COOKIE" => @cookie
 
                 assert last_response.redirect?
-                assert_equal("/auth/remote/callback", Addressable::URI.parse(last_response.headers["Location"]).path)
+                assert_equal("/auth/charon/callback", Addressable::URI.parse(last_response.headers["Location"]).path)
               end
 
               should "persist the ticket for retrieval later" do
@@ -256,8 +256,7 @@ class ServerTest < Test::Unit::TestCase
     # 2.2
     context "/serviceLogin as credential acceptor" do
       setup do
-        @lt = LoginTicket.new
-        @lt.save!(@redis)
+        @lt = LoginTicket.create!(@redis)
       end
 
       # 2.2.1
@@ -308,7 +307,7 @@ class ServerTest < Test::Unit::TestCase
 
           context "with a 'service' parameter" do
             setup do
-              @service_param_url = /auth\/remote\/callback/ # FIXME: regex is not obvious
+              @service_param_url = /auth\/charon\/callback/ # FIXME: regex is not obvious
               @params[:service] = @test_service
             end
 
