@@ -112,8 +112,7 @@ module Authentication
       # Failures will throw back to self, which we've registered with Warden to handle login failures
       warden.authenticate!(:scope => :remote, :action => "unauthenticated")
 
-      tgt = TicketGrantingTicket.new(username)
-      tgt.save!(settings.redis)
+      tgt = TicketGrantingTicket.create!(username, settings.redis)
       cookie = tgt.to_cookie(request.host)
       response.set_cookie(*cookie)
 

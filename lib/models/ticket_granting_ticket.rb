@@ -5,6 +5,12 @@ class TicketGrantingTicket < Ticket
         new(username, ticket)
       end
     end
+
+    def create!(user, store)
+      tgt = self.new(user)
+      tgt.save!(store)
+      tgt
+    end
   end
 
   attr_reader :username

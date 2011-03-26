@@ -25,5 +25,11 @@ class TicketGrantingTicketTest < Test::Unit::TestCase
       @tgt.destroy!(@redis)
       assert_nil TicketGrantingTicket.validate(@tgt.ticket, @redis)
     end
+
+    should "be instatiated and saved in one method through create!" do
+      @tgt = TicketGrantingTicket.create!('quentin', @redis)
+      assert_not_nil @tgt
+      assert TicketGrantingTicket.validate(@tgt.ticket, @redis)
+    end
   end
 end
