@@ -64,8 +64,7 @@ module Authentication
       elsif @gateway
         if @service_url
           if ticket_granting_ticket
-            st = ServiceTicket.new(@service, ticket_granting_ticket.username)
-            st.save!(settings.redis)
+            st = ServiceTicket.create!(@service, ticket_granting_ticket.username, settings.redis)
             redirect_url = @service_url.clone
             if @service_url.query_values.nil?
               redirect_url.query_values = @service_url.query_values = { :ticket => st.ticket }
@@ -83,8 +82,7 @@ module Authentication
       else
         if ticket_granting_ticket
           if @service_url
-            st = ServiceTicket.new(@service, ticket_granting_ticket.username)
-            st.save!(settings.redis)
+            st = ServiceTicket.create!(@service, ticket_granting_ticket.username, settings.redis)
             redirect_url = @service_url.clone
             if @service_url.query_values.nil?
               redirect_url.query_values = @service_url.query_values = { :ticket => st.ticket }
@@ -117,8 +115,7 @@ module Authentication
       response.set_cookie(*cookie)
 
       if service_url(service)
-        st = ServiceTicket.new(service, username)
-        st.save!(settings.redis)
+        st = ServiceTicket.create!(service, username, settings.redis)
         redirect service_url(service).to_s + "?ticket=#{st.ticket}", 303
       else
         erb(:logged_in)

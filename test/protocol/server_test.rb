@@ -12,8 +12,7 @@ class ServerTest < Test::Unit::TestCase
   end
 
   def sso_session_for(username)
-    @tgt = TicketGrantingTicket.new("quentin")
-    @tgt.save!(@redis)
+    @tgt = TicketGrantingTicket.create!("quentin", @redis)
     cookie = @tgt.to_cookie("localhost", "/")
 
     # Rack's set_cookie appears to be worse than useless, unless I'm mistaken
@@ -343,7 +342,7 @@ class ServerTest < Test::Unit::TestCase
 
       context "optional url parameter" do
         setup do
-          get "/serviceLogout", { :url => "http://myreturn.app" },"HTTP_COOKIE" => @cookie
+          get "/serviceLogout", { :url => "http://myreturn.app" }, "HTTP_COOKIE" => @cookie
         end
 
         should "reditect a user to the provided URL"
@@ -360,8 +359,7 @@ class ServerTest < Test::Unit::TestCase
 
     context "/serviceValidate" do
       setup do
-        @st = ServiceTicket.new(@test_service, "quentin")
-        @st.save!(@redis)
+        @st = ServiceTicket.create!(@test_service, "quentin", @redis)
       end
 
       must "issue proxy granting tickets when requested."
@@ -453,8 +451,7 @@ class ServerTest < Test::Unit::TestCase
       context "/proxyValidate" do
         context "performing the same validation tasks as /serviceValidate" do
           setup do
-            @st = ServiceTicket.new(@test_service, "quentin")
-            @st.save!(@redis)
+            @st = ServiceTicket.create!(@test_service, "quentin", @redis)
           end
 
           context "parameters" do
@@ -537,8 +534,7 @@ class ServerTest < Test::Unit::TestCase
 
     context "service ticket" do
       setup do
-        @st = ServiceTicket.new(@test_service, "quentin")
-        @st.save!(@redis)
+        @st = ServiceTicket.create!(@test_service, "quentin", @redis)
       end
 
       context "properties" do

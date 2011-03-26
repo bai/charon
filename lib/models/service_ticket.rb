@@ -10,6 +10,12 @@ class ServiceTicket < Ticket
       end
     end
 
+    def create!(service, username, store)
+      st = self.new(service, username)
+      st.save!(store)
+      st
+    end
+
     def expire_time
       300
     end
