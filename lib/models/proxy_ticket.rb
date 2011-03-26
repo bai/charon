@@ -1,10 +1,16 @@
 class ProxyTicket < Ticket
   class << self
     def validate!(ticket, store)
-      if service_url = store[ticket]
+      if service = store[ticket]
         store.del ticket
-        new(service_url)
+        new(service)
       end
+    end
+
+    def create!(service, store)
+      pt = self.new(service)
+      pt.save!(store)
+      pt
     end
 
     def expire_time
@@ -12,12 +18,12 @@ class ProxyTicket < Ticket
     end
   end
 
-  def initialize(service_url)
-    @service_url = service_url
+  def initialize(service)
+    @service = service
   end
 
-  def valid_for_service?(url)
-    @service_url == url
+  def valid_for_service?(service)
+    @service == service
   end
 
   def ticket
@@ -29,7 +35,7 @@ class ProxyTicket < Ticket
   end
 
   def save!(store)
-    store[ticket] = @service_url
+    store[ticket] = @service
     store.expire ticket, self.class.expire_time
   end
 end

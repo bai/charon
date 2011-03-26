@@ -571,8 +571,7 @@ class ServerTest < Test::Unit::TestCase
 
     context "proxy ticket" do
       setup do
-        @pt = ProxyTicket.new(@test_service)
-        @pt.save!(@redis)
+        @pt = ProxyTicket.create!(@test_service, @redis)
       end
 
       context "properties" do
@@ -613,8 +612,7 @@ class ServerTest < Test::Unit::TestCase
 
     context "proxy-granting ticket" do
       setup do
-        @pgt = ProxyGrantingTicket.new(@test_service)
-        @pgt.save!(@redis)
+        @pgt = ProxyGrantingTicket.create!(@test_service, @redis)
       end
 
       context "properties" do
@@ -634,8 +632,7 @@ class ServerTest < Test::Unit::TestCase
 
     context "login ticket" do
       setup do
-        @lt = LoginTicket.new
-        @lt.save!(@redis)
+        @lt = LoginTicket.create!(@redis)
       end
 
       context "properties" do
@@ -654,8 +651,7 @@ class ServerTest < Test::Unit::TestCase
 
     context "ticket-granting cookie" do
       setup do
-        @tgt = TicketGrantingTicket.new("quentin")
-        @tgt.save!(@redis)
+        @tgt = TicketGrantingTicket.create!("quentin", @redis)
       end
 
       context "properties" do

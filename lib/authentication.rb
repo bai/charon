@@ -105,8 +105,6 @@ module Authentication
       password = params[:password]
       service  = params[:service]
 
-      # Redirecting to credential requestor if we don't have these params
-      # redirect "/serviceLogin" + "?service=account", 303 unless username && password && service && login_ticket
       # Failures will throw back to self, which we've registered with Warden to handle login failures
       warden.authenticate!(:scope => :charon, :action => "unauthenticated")
 

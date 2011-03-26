@@ -5,14 +5,20 @@ class ProxyGrantingTicket < Ticket
         new(service_name)
       end
     end
+
+    def create!(service_name, store)
+      pgt = self.new(service_name)
+      pgt.save!(store)
+      pgt
+    end
   end
 
   def initialize(service_name)
     @service_name = service_name
   end
 
-  def valid_for_service?(url)
-    @service_name == url
+  def valid_for_service?(service_name)
+    @service_name == service_name
   end
 
   def ticket
@@ -24,8 +30,6 @@ class ProxyGrantingTicket < Ticket
   end
 
   def create_proxy_ticket!(store)
-    pt = ProxyTicket.new(@service_name, self)
-    pt.save!(store)
-    pt
+    ProxyTicket.new(@service_name, store) # TODO: pass self?
   end
 end

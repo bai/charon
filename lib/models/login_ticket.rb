@@ -8,7 +8,7 @@ class LoginTicket < Ticket
     end
 
     def create!(store)
-      lt =  self.new
+      lt = self.new
       lt.save!(store)
       lt
     end
