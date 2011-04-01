@@ -7,8 +7,7 @@ module Charon
       setup do
         @redis = Redis.new
         assert_not_nil @redis
-        @st = Charon::ServiceTicket.new("http://localhost", "quentin")
-        @st.save!(@redis)
+        @st = Charon::ServiceTicket.create!("http://localhost", "quentin", @redis)
       end
 
       context "find!" do

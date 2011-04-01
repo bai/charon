@@ -6,8 +6,7 @@ module Charon
     context "A ProxyTicket" do
       setup do
         @redis = Redis.new
-        @pt = Charon::ProxyTicket.new("http://example.com")
-        @pt.save!(@redis)
+        @pt = Charon::ProxyTicket.create!("http://example.com", @redis)
       end
 
       should "be able to retrieve remaining time" do

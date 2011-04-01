@@ -6,8 +6,7 @@ module Chadon
     context "A LoginTicket" do
       setup do
         @redis = Redis.new
-        @lt = Charon::LoginTicket.new
-        @lt.save!(@redis)
+        @lt = Charon::LoginTicket.create!(@redis)
       end
 
       should "be able to retrieve remaining time" do

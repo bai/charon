@@ -6,8 +6,7 @@ module Charon
     context "A ProxyGrantingTicket" do
       setup do
         @redis = Redis.new
-        @pgt = Charon::ProxyGrantingTicket.new("http://example.com")
-        @pgt.save!(@redis)
+        @pgt = Charon::ProxyGrantingTicket.create!("http://example.com", @redis)
       end
 
       should "return a ticket" do

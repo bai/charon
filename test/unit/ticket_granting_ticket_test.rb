@@ -6,8 +6,7 @@ module Charon
     context "A TicketGrantingTicket" do
       setup do
         @redis = Redis.new
-        @tgt = Charon::TicketGrantingTicket.new("quentin")
-        @tgt.save!(@redis)
+        @tgt = Charon::TicketGrantingTicket.create!("quentin", @redis)
       end
 
       should "be able to retrieve the username" do
