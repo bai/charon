@@ -14,9 +14,9 @@ Shoulda::ClassMethods.module_eval do
   alias :may :should
 end
 
-require "authentication"
+require "charon"
 
-class Authentication::Server
+class Charon::Server
   set :environment, :test
 
   configure :test do

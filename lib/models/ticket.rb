@@ -1,3 +1,5 @@
-class Ticket
-  include Authentication::Helpers
+module Charon
+  class Ticket
+    include Charon::Helpers
+  end
 end

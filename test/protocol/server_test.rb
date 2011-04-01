@@ -1,6 +1,6 @@
 require "test_helper"
 
-class ServerTest < Test::Unit::TestCase
+class Charon::ServerTest < Test::Unit::TestCase
   module Rack
     module Test
       DEFAULT_HOST = "localhost"
@@ -8,11 +8,11 @@ class ServerTest < Test::Unit::TestCase
   end
 
   def app
-    app ||= Authentication::Server
+    app ||= Charon::Server
   end
 
   def sso_session_for(username)
-    @tgt = TicketGrantingTicket.create!("quentin", @redis)
+    @tgt = Charon::TicketGrantingTicket.create!("quentin", @redis)
     cookie = @tgt.to_cookie("localhost", "/")
 
     # Rack's set_cookie appears to be worse than useless, unless I'm mistaken
@@ -94,7 +94,7 @@ class ServerTest < Test::Unit::TestCase
             should "persist the ticket for retrieval later" do
               get "/serviceLogin", { :service => @test_service }, "HTTP_COOKIE" => @cookie
               ticket_number = last_response.inspect[/ST-[A-Za-z0-9]+/]
-              st = ServiceTicket.find!(ticket_number, @redis)
+              st = Charon::ServiceTicket.find!(ticket_number, @redis)
               assert_not_nil st
               assert st.valid_for_service?(@test_service)
             end
@@ -164,7 +164,7 @@ class ServerTest < Test::Unit::TestCase
               should "persist the ticket for retrieval later" do
                 get "/serviceLogin", @params, "HTTP_COOKIE" => @cookie
                 ticket_number = last_response.inspect[/ST-[A-Za-z0-9]+/]
-                st = ServiceTicket.find!(ticket_number, @redis)
+                st = Charon::ServiceTicket.find!(ticket_number, @redis)
                 assert_not_nil st
                 assert st.valid_for_service?(@test_service)
               end
@@ -222,7 +222,7 @@ class ServerTest < Test::Unit::TestCase
 
     context "/serviceLogin as credential acceptor" do
       setup do
-        @lt = LoginTicket.create!(@redis)
+        @lt = Charon::LoginTicket.create!(@redis)
       end
 
       context "parameters common to all types of authentication" do
@@ -292,7 +292,7 @@ class ServerTest < Test::Unit::TestCase
             should "persist the ticket for retrieval later" do
               post "/serviceLogin", @params
               ticket_number = last_response.inspect[/ST-[A-Za-z0-9]+/]
-              st = ServiceTicket.find!(ticket_number, @redis)
+              st = Charon::ServiceTicket.find!(ticket_number, @redis)
               assert_not_nil st
               assert st.valid_for_service?(@params[:service])
             end
@@ -329,9 +329,9 @@ class ServerTest < Test::Unit::TestCase
       setup { sso_session_for("quentin") }
 
       should "destroy the ticket granting ticket" do
-        assert_not_nil TicketGrantingTicket.validate(@tgt.ticket, @redis)
+        assert_not_nil Charon::TicketGrantingTicket.validate(@tgt.ticket, @redis)
         get "/serviceLogout", "","HTTP_COOKIE" => @cookie
-        assert_nil TicketGrantingTicket.validate(@tgt.ticket, @redis)
+        assert_nil Charon::TicketGrantingTicket.validate(@tgt.ticket, @redis)
       end
 
       should "show login page" do
@@ -359,7 +359,7 @@ class ServerTest < Test::Unit::TestCase
 
     context "/serviceValidate" do
       setup do
-        @st = ServiceTicket.create!(@test_service, "quentin", @redis)
+        @st = Charon::ServiceTicket.create!(@test_service, "quentin", @redis)
       end
 
       must "issue proxy granting tickets when requested."
@@ -435,7 +435,7 @@ class ServerTest < Test::Unit::TestCase
           end
 
           must "invalidate the ticket" do
-            assert !ServiceTicket.find!(@st.ticket, @redis)
+            assert !Charon::ServiceTicket.find!(@st.ticket, @redis)
           end
         end
 
@@ -451,7 +451,7 @@ class ServerTest < Test::Unit::TestCase
       context "/proxyValidate" do
         context "performing the same validation tasks as /serviceValidate" do
           setup do
-            @st = ServiceTicket.create!(@test_service, "quentin", @redis)
+            @st = Charon::ServiceTicket.create!(@test_service, "quentin", @redis)
           end
 
           context "parameters" do
@@ -517,7 +517,7 @@ class ServerTest < Test::Unit::TestCase
             end
 
             must "invalidate the ticket" do
-              assert !ServiceTicket.find!(@st.ticket, @redis)
+              assert !Charon::ServiceTicket.find!(@st.ticket, @redis)
             end
           end
 
@@ -534,7 +534,7 @@ class ServerTest < Test::Unit::TestCase
 
     context "service ticket" do
       setup do
-        @st = ServiceTicket.create!(@test_service, "quentin", @redis)
+        @st = Charon::ServiceTicket.create!(@test_service, "quentin", @redis)
       end
 
       context "properties" do
@@ -548,9 +548,9 @@ class ServerTest < Test::Unit::TestCase
         end
 
         must "be valid for only one attempt" do
-          assert ServiceTicket.find!(@st.ticket, @redis)
+          assert Charon::ServiceTicket.find!(@st.ticket, @redis)
 
-          assert !ServiceTicket.find!(@st.ticket, @redis)
+          assert !Charon::ServiceTicket.find!(@st.ticket, @redis)
         end
 
         should "expire unvalidated service tickets in a reasonable period of time (recommended to be less than 5 minutes)" do
@@ -571,7 +571,7 @@ class ServerTest < Test::Unit::TestCase
 
     context "proxy ticket" do
       setup do
-        @pt = ProxyTicket.create!(@test_service, @redis)
+        @pt = Charon::ProxyTicket.create!(@test_service, @redis)
       end
 
       context "properties" do
@@ -585,9 +585,9 @@ class ServerTest < Test::Unit::TestCase
         end
 
         must "be valid for only one attempt" do
-          assert ProxyTicket.validate!(@pt.ticket, @redis)
+          assert Charon::ProxyTicket.validate!(@pt.ticket, @redis)
 
-          assert !ProxyTicket.validate!(@pt.ticket, @redis)
+          assert !Charon::ProxyTicket.validate!(@pt.ticket, @redis)
         end
 
         should "expire unvalidated service tickets in a reasonable period of time (recommended to be less than 5 minutes)" do
@@ -612,7 +612,7 @@ class ServerTest < Test::Unit::TestCase
 
     context "proxy-granting ticket" do
       setup do
-        @pgt = ProxyGrantingTicket.create!(@test_service, @redis)
+        @pgt = Charon::ProxyGrantingTicket.create!(@test_service, @redis)
       end
 
       context "properties" do
@@ -632,15 +632,15 @@ class ServerTest < Test::Unit::TestCase
 
     context "login ticket" do
       setup do
-        @lt = LoginTicket.create!(@redis)
+        @lt = Charon::LoginTicket.create!(@redis)
       end
 
       context "properties" do
         must "be probablistically unique"
 
         must "be valid for only one attempt" do
-          assert LoginTicket.validate!(@lt.ticket, @redis)
-          assert !LoginTicket.validate!(@lt.ticket, @redis)
+          assert Charon::LoginTicket.validate!(@lt.ticket, @redis)
+          assert !Charon::LoginTicket.validate!(@lt.ticket, @redis)
         end
 
         should "begin with the characters 'LT-'" do
@@ -651,7 +651,7 @@ class ServerTest < Test::Unit::TestCase
 
     context "ticket-granting cookie" do
       setup do
-        @tgt = TicketGrantingTicket.create!("quentin", @redis)
+        @tgt = Charon::TicketGrantingTicket.create!("quentin", @redis)
       end
 
       context "properties" do
@@ -676,9 +676,9 @@ class ServerTest < Test::Unit::TestCase
     context "ticket and ticket-granting cookie character set" do
       setup do
         @tickets = [
-          LoginTicket.new,
-          ServiceTicket.new("account", "foo"),
-          TicketGrantingTicket.new("foo")
+          Charon::LoginTicket.new,
+          Charon::ServiceTicket.new("account", "foo"),
+          Charon::TicketGrantingTicket.new("foo")
         ]
       end
 

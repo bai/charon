@@ -1,4 +1,4 @@
-module Authentication
+module Charon
   module Strategies
     class Simple < Base
       User = Struct.new(:username, :password)
@@ -15,4 +15,4 @@ module Authentication
   end
 end
 
-Warden::Strategies.add(:simple, Authentication::Strategies::Simple)
+Warden::Strategies.add(:simple, Charon::Strategies::Simple)

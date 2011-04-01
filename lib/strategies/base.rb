@@ -1,4 +1,4 @@
-module Authentication
+module Charon
   module Strategies
     class Base < Warden::Strategies::Base
       def valid?

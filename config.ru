@@ -3,6 +3,6 @@ require "bundler"
 Bundler.require
 
 $:.unshift File.join(File.dirname(__FILE__), "lib")
-require "authentication"
+require "charon"
 
-run Authentication::Server
+run Charon::Server

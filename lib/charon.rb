@@ -28,9 +28,9 @@ module Sinatra
   end
 end
 
-module Authentication
+module Charon
   class Server < Sinatra::Base
-    include Authentication::Helpers
+    include Charon::Helpers
 
     set :redis, Proc.new { Redis.new }
     set :locales, %w(en ru)

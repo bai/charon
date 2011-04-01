@@ -1,4 +1,4 @@
-module Authentication
+module Charon
   module Helpers
     private
       def random_string(max_length = 29)
