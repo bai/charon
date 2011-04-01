@@ -45,7 +45,7 @@ module Charon
     use Warden::Manager do |manager|
       manager.failure_app = self
       manager.default_scope = :charon
-      manager.scope_defaults(:charon, :strategies => [ :simple ], :action => "login")
+      manager.scope_defaults(:charon, :strategies => [ :simple ], :action => "serviceLogin")
     end
 
     before do
