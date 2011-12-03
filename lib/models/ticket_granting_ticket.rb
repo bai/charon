@@ -1,6 +1,8 @@
 module Charon
   class TicketGrantingTicket < Ticket
     class << self
+      attr_accessor :expire_time
+
       def validate(ticket, store)
         if ticket && username = store[ticket]
           new(username, ticket)
@@ -15,6 +17,8 @@ module Charon
     end
 
     attr_reader :username
+
+    self.expire_time = 300
 
     def initialize(user, ticket = nil)
       @username = user
@@ -31,6 +35,7 @@ module Charon
 
     def save!(store)
       store[ticket] = username
+      store.expire ticket, self.class.expire_time
     end
 
     def to_cookie(domain, path = "/")

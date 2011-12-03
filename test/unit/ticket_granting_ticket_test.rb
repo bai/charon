@@ -31,6 +31,12 @@ module Charon
         assert_not_nil @tgt
         assert Charon::TicketGrantingTicket.validate(@tgt.ticket, @redis)
       end
+
+      should 'expire' do
+        @tgt = Charon::TicketGrantingTicket.create!('quentin', @redis)
+        ttl = @redis.ttl(@tgt.ticket)
+        assert ttl >= 299 && ttl <= 300
+      end
     end
   end
 end
