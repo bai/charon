@@ -21,35 +21,35 @@ class Charon::ServerTest < Test::Unit::TestCase
   end
 
   def assert_invalid_request_json_response(last_response)
-    assert_equal("application/json", last_response.content_type)
+    assert_equal("application/json;charset=utf-8", last_response.content_type)
     json = Yajl::Parser.parse(last_response.body)
 
     assert_equal(102, json["status"])
   end
 
   def assert_authentication_success_json_response(last_response)
-    assert_equal("application/json", last_response.content_type)
+    assert_equal("application/json;charset=utf-8", last_response.content_type)
     json = Yajl::Parser.parse(last_response.body)
 
     assert_equal("quentin", json["data"]["name"])
   end
 
   def assert_invalid_ticket_json_response(last_response)
-    assert_equal("application/json", last_response.content_type)
+    assert_equal("application/json;charset=utf-8", last_response.content_type)
     json = Yajl::Parser.parse(last_response.body)
 
     assert_equal(103, json["status"])
   end
 
   def assert_authenticate_failure_json_response(last_response)
-    assert_equal("application/json", last_response.content_type)
+    assert_equal("application/json;charset=utf-8", last_response.content_type)
     json = Yajl::Parser.parse(last_response.body)
 
     assert json["status"] < 200, "Expected authentication failure status code in #{json}"
   end
 
   def assert_invalid_service_json_response(last_response)
-    assert_equal("application/json", last_response.content_type)
+    assert_equal("application/json;charset=utf-8", last_response.content_type)
     json = Yajl::Parser.parse(last_response.body)
 
     assert_equal(101, json["status"])
