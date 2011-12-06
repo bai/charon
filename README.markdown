@@ -1,4 +1,4 @@
-# Charon ![Build status](http://travis-ci.org/bai/charon.png)
+# Charon [![Build Status](https://secure.travis-ci.org/bai/charon.png)](http://travis-ci.org/bai/charon)
 
 Authentication server.
 
@@ -18,6 +18,4 @@ Authentication server.
 
 ## Copyright
 
-Copyright (c) 2011 beawesomeinstead. See LICENSE.txt for
-further details.
-
+Copyright (c) 2011 beawesomeinstead. See LICENSE.txt for further details.
