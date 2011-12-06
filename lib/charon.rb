@@ -35,7 +35,7 @@ module Charon
     set :redis, Proc.new { Redis.new }
     set :locales, %w(en ru)
     set :root, File.join(File.dirname(__FILE__), "/..")
-    set :public, File.join(root, "/public")
+    set :public_folder, File.join(root, "/public")
     set :services, { "pipeline" => "http://127.0.0.1:3000", "account" => "http://127.0.0.1:3000" }
     set :error_codes, { "OK" => 200, "INVALID_SERVICE" => 101, "INVALID_REQUEST" => 102, "INVALID_TICKET" => 103 }
 
