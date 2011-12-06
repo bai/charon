@@ -22,7 +22,7 @@ module Sinatra
       app.helpers I18n::Helpers
 
       Dir["#{app.root}/locales/*.yml"].each do |f|
-        ::I18n.backend.load_translations File.expand_path(f, app.root + "/locales")
+        ::I18n.backend.load_translations f
       end
     end
   end
